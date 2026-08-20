@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "117381375000",
+    "project_id": "suplicem-ce464",
+    "storage_bucket": "suplicem-ce464.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117381375000:android:placeholder",
+        "android_client_info": {
+          "package_name": "com.anonymous.suplicemgo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "YOUR_FIREBASE_ANDROID_API_KEY_HERE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
