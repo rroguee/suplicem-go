@@ -12,6 +12,10 @@ export default function DriverLayout() {
         name="driver-order"
         options={{ title: "Driver order", headerShown: false }}
       />
+      <Stack.Screen
+        name="driver-trip-preview"
+        options={{ title: "Detalle del Viaje", headerShown: false }}
+      />
     </Stack>
   );
 }

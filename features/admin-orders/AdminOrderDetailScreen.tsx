@@ -14,7 +14,6 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { useAdminOrderDetail } from "./hooks/useAdminOrderDetail";
 import { useDeliveryEditor } from "./hooks/useDeliveryEditor";
 import { AdminOrderHeader } from "./components/AdminOrderHeader";
-import { OrderProductsCard } from "./components/OrderProductsCard";
 import { OrderFinancialSummary } from "./components/OrderFinancialSummary";
 import { OrderDispatchCard } from "./components/OrderDispatchCard";
 import { DeliveriesSection } from "./components/DeliveriesSection";
@@ -106,13 +105,12 @@ export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
           onCancel={handleCancel}
         />
 
-        {/* 2. Productos comprados */}
-        <OrderProductsCard items={currentOrder.items || []} />
-
-        {/* 3. Resumen financiero */}
+        {/* 2. Resumen financiero y Productos */}
         <OrderFinancialSummary
           items={currentOrder.items || []}
           comments={currentOrder.comments}
+          paymentMethod={currentOrder.paymentMethod}
+          creditNote={currentOrder.creditNote}
         />
 
         {/* 4. Conductor y vehículo asignado (si existe despacho) */}

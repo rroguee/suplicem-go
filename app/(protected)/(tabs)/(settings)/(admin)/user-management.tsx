@@ -3,8 +3,9 @@ import { useLoading } from "@/context/loadingContext";
 import { useMountEffect } from "@/hooks/lifeCicle";
 import { activeOrInactiveUser, getUsers } from "@/services/userService";
 import { StatusBadge } from "@/components/StatusBadge";
+import { FilterChips, FilterOption } from "@/components/FilterChips";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Alert,
   ScrollView,
@@ -15,9 +16,24 @@ import {
   View,
 } from "react-native";
 
+const ROLE_OPTIONS: FilterOption<"all" | "client" | "driver" | "admin">[] = [
+  { id: "all", label: "Todos los roles" },
+  { id: "client", label: "Clientes" },
+  { id: "driver", label: "Conductores" },
+  { id: "admin", label: "Administradores" },
+];
+
+const STATUS_OPTIONS: FilterOption<"all" | "active" | "inactive">[] = [
+  { id: "all", label: "Cualquier estado" },
+  { id: "active", label: "Activos" },
+  { id: "inactive", label: "Inactivos" },
+];
+
 const UsersListScreen: React.FC = () => {
-  const [users, setUsers] = useState<any[]>([]);
+   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | "client" | "driver" | "admin">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const { show, hide } = useLoading();
   const { showAlert } = useAlert();
 
@@ -131,20 +147,61 @@ const UsersListScreen: React.FC = () => {
     }
   };
 
-  const filteredUsers = sortUsers(
-    users.filter((user) => {
-      const query = search.toLowerCase();
-      return (
-        user.names?.toLowerCase().includes(query) ||
-        user.lastNames?.toLowerCase().includes(query) ||
-        user.email?.toLowerCase().includes(query) ||
-        user.identificationType?.toLowerCase().includes(query) ||
-        user.identification?.toLowerCase().includes(query) ||
-        user.userType?.toLowerCase().includes(query) ||
-        user.status?.toLowerCase().includes(query)
-      );
-    })
-  );
+  const roleCounts = useMemo(() => {
+    const counts = { all: users.length, client: 0, driver: 0, admin: 0 };
+    users.forEach((u) => {
+      const role = u.userType?.toLowerCase();
+      if (role === "client") counts.client++;
+      else if (role === "driver") counts.driver++;
+      else if (role === "admin") counts.admin++;
+    });
+    return counts;
+  }, [users]);
+
+  const statusCounts = useMemo(() => {
+    const counts = { all: users.length, active: 0, inactive: 0 };
+    users.forEach((u) => {
+      const st = u.status?.toLowerCase();
+      if (st === "active") counts.active++;
+      else if (st === "inactive" || st === "pending") counts.inactive++;
+    });
+    return counts;
+  }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    return sortUsers(
+      users.filter((user) => {
+        // 1. Filtro por Rol
+        if (roleFilter !== "all" && user.userType?.toLowerCase() !== roleFilter) {
+          return false;
+        }
+
+        if (statusFilter === "active" && user.status?.toLowerCase() !== "active") {
+          return false;
+        }
+        if (
+          statusFilter === "inactive" &&
+          user.status?.toLowerCase() !== "inactive" &&
+          user.status?.toLowerCase() !== "pending"
+        ) {
+          return false;
+        }
+
+        
+
+        const query = search.toLowerCase().trim();
+        if (!query) return true;
+        return (
+          user.names?.toLowerCase().includes(query) ||
+          user.lastNames?.toLowerCase().includes(query) ||
+          user.email?.toLowerCase().includes(query) ||
+          user.identification?.toLowerCase().includes(query) ||
+          user.driverCode?.toLowerCase().includes(query) ||
+          user.vehicle?.plateNumber?.toLowerCase().includes(query)
+        );
+      })
+    );
+  }, [users, roleFilter, statusFilter, search]);
 
   const translateRole = (role: string) => {
     switch (role) {
@@ -173,6 +230,32 @@ const UsersListScreen: React.FC = () => {
         value={search}
         onChangeText={setSearch}
       />
+
+      {/* Filtro por Rol */}
+      <FilterChips
+        options={ROLE_OPTIONS}
+        activeFilter={roleFilter}
+        onSelectFilter={setRoleFilter}
+        counts={roleCounts}
+      />
+
+      {/* Filtro por Estado */}
+      <FilterChips
+        options={STATUS_OPTIONS}
+        activeFilter={statusFilter}
+        onSelectFilter={setStatusFilter}
+        counts={statusCounts}
+        activeColor="#0F294A"
+      />
+
+      {filteredUsers.length === 0 && (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="people-outline" size={42} color="#94A3B8" />
+          <Text style={styles.emptyText}>
+            No se encontraron usuarios con los filtros seleccionados.
+          </Text>
+        </View>
+      )}
 
       {filteredUsers.map((user) => (
         <View key={user.uid} style={styles.userCard}>
@@ -366,5 +449,16 @@ const styles = StyleSheet.create({
   driverPlateAdminText: {
     fontSize: 13,
     color: "#0F294A",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#94A3B8",
+    textAlign: "center",
   },
 });

@@ -1,15 +1,11 @@
-import { useAlert } from "@/context/alertContext";
 import { AuthContext } from "@/context/authContext";
 import { useLoading } from "@/context/loadingContext";
 import { AcceptedTripContext } from "@/context/TripContext";
 import {
-  aceptedTrip,
   getDriverActiveTrip,
   getTripAvailable,
-  getTripDetail,
 } from "@/services/tripsService";
 import { Ionicons } from "@expo/vector-icons";
-import * as Location from "expo-location";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useContext, useState } from "react";
 import {
@@ -40,25 +36,9 @@ const DriverHomeScreen = () => {
   const router = useRouter();
   const { show, hide } = useLoading();
   const { user } = useContext(AuthContext);
-  const { saveTrip, clearTrip } = useContext(AcceptedTripContext);
-  const [actualTripInProgress, setActualTripInProgress] = useState(false);
-  const { showAlert } = useAlert();
+  const { trip: contextTrip, saveTrip, clearTrip } = useContext(AcceptedTripContext);
 
-  useFocusEffect(
-    useCallback(() => {
-      const getTripsAsync = async () => {
-        show();
-        await fetchTrips();
-        await validateTrips();
-        hide();
-      };
-
-      getTripsAsync();
-
-      return () => {};
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-  );
+  const hasAcceptedTrip = Boolean(activeTrip || contextTrip);
 
   const validateTrips = async () => {
     try {
@@ -73,21 +53,16 @@ const DriverHomeScreen = () => {
           trip.driver?.id === user?.uid;
 
         if (isMyTrip) {
-          // Un viaje nada más está "en curso" luego de que se le da a iniciar viaje (status === "started" | "in_progress")
-          const isStarted = trip.status === "started" || trip.status === "in_progress";
-          setActualTripInProgress(isStarted);
           setActiveTrip(trip);
           saveTrip(trip);
           return;
         }
       }
 
-      setActualTripInProgress(false);
       setActiveTrip(null);
       clearTrip();
     } catch (error) {
       console.error("Error validando viaje activo:", error);
-      setActualTripInProgress(false);
       setActiveTrip(null);
     }
   };
@@ -112,6 +87,22 @@ const DriverHomeScreen = () => {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      const getTripsAsync = async () => {
+        show();
+        await fetchTrips();
+        await validateTrips();
+        hide();
+      };
+
+      getTripsAsync();
+
+      return () => {};
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
+
   const formatDate = (isoDate: string): string => {
     const date = new Date(isoDate);
     const day = String(date.getDate()).padStart(2, "0");
@@ -120,88 +111,6 @@ const DriverHomeScreen = () => {
     return `${day}/${month}/${year}`;
   };
 
-  const handleAcceptTrip = async (tripId: string) => {
-    // Si ya hay un viaje iniciado en curso (started/in_progress), no permitir iniciar otro hasta completarlo
-    const hasStartedTrip =
-      activeTrip && (activeTrip.status === "started" || activeTrip.status === "in_progress");
-
-    if (hasStartedTrip) {
-      showAlert({
-        message: `Ya tienes el viaje #${activeTrip.tripNumber || ""} en curso. Debes completarlo antes de aceptar uno nuevo.`,
-        type: "warning",
-      });
-      return;
-    }
-
-    // Si el conductor ya aceptó este viaje previamente, llevarlo directamente a los detalles para que pueda iniciarlo
-    if (activeTrip && activeTrip.id === tripId && activeTrip.status === "accepted") {
-      saveTrip(activeTrip);
-      router.push("/driver-order");
-      return;
-    }
-
-    try {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          console.warn("Ubicación no concedida al aceptar el viaje");
-        }
-      } catch (e) {
-        console.warn("Aviso de permisos de ubicación:", e);
-      }
-
-      show();
-
-      const acceptResponse = await aceptedTrip(tripId);
-
-      if (acceptResponse.success) {
-        // Al aceptar, el viaje queda en estado "accepted" (no "started" hasta que el conductor presione Iniciar viaje)
-        try {
-          const tripResponse = await getTripDetail(tripId);
-          if (tripResponse?.success && tripResponse?.trip) {
-            saveTrip(tripResponse.trip);
-            setActiveTrip(tripResponse.trip);
-          } else {
-            const currentTrip = trips.find((t) => t.id === tripId);
-            const fallbackTrip = {
-              id: tripId,
-              tripNumber: currentTrip?.tripNumber || "---",
-              totalTons: currentTrip?.totalTons || 0,
-              createdAt: currentTrip?.createdAt || new Date().toISOString(),
-              assignedDriverId: user?.uid || "",
-              status: "accepted",
-              orderIds: [],
-              orders: [],
-              comments: currentTrip?.comments || "",
-            };
-            saveTrip(fallbackTrip as any);
-            setActiveTrip(fallbackTrip);
-          }
-        } catch (detailErr) {
-          console.warn("Aviso al obtener detalle de viaje:", detailErr);
-        }
-
-        showAlert({ message: "Viaje aceptado correctamente.", type: "success" });
-        await fetchTrips();
-        router.push("/driver-order");
-      } else {
-        showAlert({
-          message: acceptResponse?.message || "No se pudo aceptar el viaje.",
-          type: "error",
-        });
-
-        await fetchTrips();
-      }
-    } catch (error) {
-      console.error("❌ Error accepting trip:", error);
-      showAlert({
-        message: "Ocurrió un error al aceptar el viaje.",
-        type: "error",
-      });
-    } finally {
-      hide();
-    }
-  };
 
   return (
     <ScrollView
@@ -329,20 +238,39 @@ const DriverHomeScreen = () => {
             <TouchableOpacity
               style={[
                 styles.button,
-                actualTripInProgress && { backgroundColor: "#888" },
-                activeTrip?.id === trip.id && activeTrip?.status === "accepted" && { backgroundColor: "#2563EB" },
+                { backgroundColor: "#0F294A" },
+                hasAcceptedTrip && styles.disabledButton,
               ]}
+              disabled={hasAcceptedTrip}
               activeOpacity={0.8}
-              onPress={() => handleAcceptTrip(trip.id)}
+              onPress={() => {
+                router.push({
+                  pathname: "/driver-trip-preview",
+                  params: { tripId: trip.id },
+                });
+              }}
             >
-              <Text style={styles.buttonText}>
-                {activeTrip?.id === trip.id && activeTrip?.status === "accepted"
-                  ? "Iniciar viaje"
-                  : actualTripInProgress
-                  ? "Viaje en curso"
-                  : "Aceptar viaje"}
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Ionicons
+                  name={hasAcceptedTrip ? "lock-closed-outline" : "eye-outline"}
+                  size={18}
+                  color={hasAcceptedTrip ? "#94A3B8" : "#fff"}
+                />
+                <Text
+                  style={[
+                    styles.buttonText,
+                    hasAcceptedTrip && styles.disabledButtonText,
+                  ]}
+                >
+                  Ver detalle del viaje
+                </Text>
+              </View>
             </TouchableOpacity>
+            {hasAcceptedTrip && (
+              <Text style={styles.disabledTripNotice}>
+                Ya tienes un viaje aceptado o en curso
+              </Text>
+            )}
           </View>
         ))
       ) : (
@@ -553,5 +481,20 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontWeight: "bold",
     fontSize: 14,
+  },
+  disabledButton: {
+    backgroundColor: "#E2E8F0",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  disabledButtonText: {
+    color: "#94A3B8",
+  },
+  disabledTripNotice: {
+    fontSize: 12,
+    color: "#64748B",
+    textAlign: "center",
+    marginTop: 8,
+    fontWeight: "500",
   },
 });
