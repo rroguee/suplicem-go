@@ -35,9 +35,11 @@ const TripDetailScreen: React.FC = () => {
     null
   );
 
+  const tripId = trip?.id;
+
   const refreshDriverLocationAndTripStatus = useCallback(async () => {
-    if (!trip?.id) return;
-    const tripResponse = await getTripDetail(trip.id);
+    if (!tripId) return;
+    const tripResponse = await getTripDetail(tripId);
     console.log("tripResponse", tripResponse);
 
     if (tripResponse?.success && tripResponse?.trip) {
@@ -61,7 +63,7 @@ const TripDetailScreen: React.FC = () => {
         }
       }
     }
-  }, [trip?.id, saveTrip]);
+  }, [tripId, saveTrip]);
 
   useFocusEffect(
     useCallback(() => {

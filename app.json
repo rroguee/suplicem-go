@@ -12,7 +12,9 @@
       "infoPlist": {
         "UIBackgroundModes": ["location"],
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Suplicem necesita tu ubicación en segundo plano para rastrear el trayecto del camión hacia el cliente.",
-        "NSLocationWhenInUseUsageDescription": "Suplicem necesita tu ubicación para rastrear el trayecto de la entrega."
+        "NSLocationWhenInUseUsageDescription": "Suplicem necesita tu ubicación para rastrear el trayecto de la entrega.",
+        "NSCameraUsageDescription": "Suplicem necesita acceso a la cámara para tomar fotos de comprobantes de pago y documentos de identidad.",
+        "NSPhotoLibraryUsageDescription": "Suplicem necesita acceso a la galería para seleccionar comprobantes de pago y documentos de identidad."
       }
     },
     "android": {
@@ -31,7 +33,10 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION"
+        "FOREGROUND_SERVICE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
       ]
     },
     "web": {
@@ -56,6 +61,13 @@
           "locationAlwaysAndWhenInUsePermission": "Suplicem necesita tu ubicación en segundo plano para rastrear el trayecto del camión hacia el cliente.",
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Suplicem necesita acceso a tus fotos para adjuntar comprobantes de transferencia e identificación.",
+          "cameraPermission": "Suplicem necesita acceso a tu cámara para capturar comprobantes de pago y cédula."
         }
       ],
       "expo-secure-store",
