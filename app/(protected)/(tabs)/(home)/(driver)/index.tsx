@@ -9,7 +9,7 @@ import {
 } from "@/services/tripsService";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useMemo, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -19,6 +19,15 @@ import {
   View,
 } from "react-native";
 import { Trip } from "@/types/trips";
+import { FilterChips, FilterOption } from "@/components/FilterChips";
+
+type DriverTripFilter = "todos" | "assigned" | "general";
+
+const DRIVER_TRIP_FILTERS: FilterOption<DriverTripFilter>[] = [
+  { id: "todos", label: "Todos" },
+  { id: "assigned", label: "Asignados a ti" },
+  { id: "general", label: "Generales" },
+];
 
 // Componente para el mensaje de no hay viajes (NUEVO)
 const NoTripsMessage = () => (
@@ -35,12 +44,67 @@ const NoTripsMessage = () => (
 const DriverHomeScreen = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [activeTrip, setActiveTrip] = useState<any>(null);
+  const [selectedFilter, setSelectedFilter] = useState<DriverTripFilter>("todos");
   const router = useRouter();
   const { show, hide } = useLoading();
   const { user } = useContext(AuthContext);
   const { trip: contextTrip, saveTrip, clearTrip } = useContext(AcceptedTripContext);
 
+  const currentUserId = user?.uid;
   const hasAcceptedTrip = Boolean(activeTrip || contextTrip);
+
+  // Contadores dinámicos para los chips de filtro
+  const tripCounts = useMemo(() => {
+    let assignedCount = 0;
+    let generalCount = 0;
+
+    trips.forEach((t) => {
+      const isAssignedToMe = Boolean(
+        currentUserId && (t.assignedDriverId === currentUserId || (t as any).driverId === currentUserId)
+      );
+      if (isAssignedToMe) {
+        assignedCount++;
+      } else {
+        generalCount++;
+      }
+    });
+
+    return {
+      todos: trips.length,
+      assigned: assignedCount,
+      general: generalCount,
+    };
+  }, [trips, currentUserId]);
+
+  // Lista procesada: filtrada por chip y con viajes asignados estrictamente DE PRIMERO
+  const displayedTrips = useMemo(() => {
+    const filtered = trips.filter((trip) => {
+      const isAssignedToMe = Boolean(
+        currentUserId && (trip.assignedDriverId === currentUserId || (trip as any).driverId === currentUserId)
+      );
+      if (selectedFilter === "assigned") return isAssignedToMe;
+      if (selectedFilter === "general") return !isAssignedToMe;
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      const aIsMine = Boolean(
+        currentUserId && (a.assignedDriverId === currentUserId || (a as any).driverId === currentUserId)
+      );
+      const bIsMine = Boolean(
+        currentUserId && (b.assignedDriverId === currentUserId || (b as any).driverId === currentUserId)
+      );
+
+      // Prioridad 1: Los asignados al conductor van arriba
+      if (aIsMine && !bIsMine) return -1;
+      if (!aIsMine && bIsMine) return 1;
+
+      // Prioridad 2: Fecha más antigua primero (FIFO: mayor tiempo esperando)
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateA - dateB;
+    });
+  }, [trips, selectedFilter, currentUserId]);
 
   const validateTrips = async () => {
     try {
@@ -193,19 +257,28 @@ const DriverHomeScreen = () => {
         </View>
       )}
 
-      <View style={styles.headerRow}>
+        <View style={styles.headerRow}>
         <Text style={styles.title}>Viajes disponibles</Text>
         <TouchableOpacity onPress={fetchTrips} style={styles.refreshButton}>
           <Ionicons name="refresh" size={24} color="#E31E24" />
         </TouchableOpacity>
       </View>
 
-      {trips.length > 0 ? (
-        trips.map((trip, index) => (
+      {/* Filtro por Chips */}
+      <FilterChips<DriverTripFilter>
+        options={DRIVER_TRIP_FILTERS}
+        activeFilter={selectedFilter}
+        onSelectFilter={setSelectedFilter}
+        counts={tripCounts}
+        style={styles.filterChipsContainer}
+      />
+
+      {displayedTrips.length > 0 ? (
+        displayedTrips.map((trip, index) => (
           <View key={trip.id} style={styles.card}>
             <View style={styles.cardHeaderRow}>
               <Text style={styles.label}>Viaje: {trip.tripNumber}</Text>
-              {trip.assignedDriverId && (!user?.uid || trip.assignedDriverId === user?.uid) ? (
+              {trip.assignedDriverId && (!currentUserId || trip.assignedDriverId === currentUserId) ? (
                 <View style={styles.assignedBadge}>
                   <Text style={styles.assignedBadgeText}>🎯 Asignado para ti</Text>
                 </View>
@@ -263,7 +336,7 @@ const DriverHomeScreen = () => {
                         params: { tripId: trip.id },
                       });
                     }
-                  } catch (e) {
+                  } catch {
                     router.push({
                       pathname: "/driver-trip-preview",
                       params: { tripId: trip.id },
@@ -324,6 +397,16 @@ const DriverHomeScreen = () => {
             )}
           </View>
         ))
+      ) : trips.length > 0 ? (
+        <View style={noTripsStyles.container}>
+          <Ionicons name="filter-outline" size={60} color="#94A3B8" />
+          <Text style={noTripsStyles.title}>Sin viajes en este filtro</Text>
+          <Text style={noTripsStyles.message}>
+            {selectedFilter === "assigned"
+              ? "No tienes viajes asignados directamente en este momento."
+              : "No hay viajes disponibles en esta categoría."}
+          </Text>
+        </View>
       ) : (
         <NoTripsMessage />
       )}
@@ -579,5 +662,9 @@ const styles = StyleSheet.create({
     color: "#0F294A",
     fontWeight: "bold",
     fontSize: 14,
+  },
+
+  filterChipsContainer: {
+    marginBottom: 16,
   },
 });
