@@ -84,6 +84,14 @@ const AdminSettingsMainScreen: React.FC = () => {
         <Text style={styles.buttonText}>Crear Usuario</Text>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => router.push("/(protected)/(tabs)/(settings)/(admin)/bank-accounts-screen" as any)}
+      >
+        <Ionicons name="card-outline" size={24} color="#fff" />
+        <Text style={styles.buttonText}>Cuentas Bancarias</Text>
+      </TouchableOpacity>
+
       <View style={{ marginTop: 30 }}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={22} color="#E31E24" />

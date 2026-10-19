@@ -91,9 +91,9 @@ const CartScreen: React.FC = () => {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const response = await getBankAccounts();
-      if (response.success && response.bankAccounts && response.bankAccounts.length > 0) {
-        const mapped: BankAccount[] = response.bankAccounts.map((b: any) => ({
+      const accounts = await getBankAccounts();
+      if (accounts && accounts.length > 0) {
+        const mapped: BankAccount[] = accounts.map((b: any) => ({
           ...b,
           bankName: b.bankName || b.bank || "Banco",
           currency: b.currency || "DOP (Pesos Dominicanos)",

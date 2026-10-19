@@ -40,6 +40,10 @@ export default function ClientSettingsLayout() {
         name="user-detail"
         options={{ title: "Detalle de Usuario", headerShown: false }}
       />
+      <Stack.Screen
+        name="bank-accounts-screen"
+        options={{ title: "Cuentas Bancarias", headerShown: false }}
+      />
     </Stack>
   );
 }
