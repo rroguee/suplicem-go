@@ -84,9 +84,15 @@ export type BankAccount = {
   bankName: string;
   accountNumber: string;
   accountType: string;
-  rnc: string;
   currency: string;
-  holder: string;
+  // Campos del nuevo API
+  accountHolder?: string;
+  isActive?: boolean;
+  routingNumber?: string;
+  swiftCode?: string;
+  // Campos legacy (backward compatibility)
+  rnc?: string;
+  holder?: string;
 };
 
 export const BANK_ACCOUNTS: BankAccount[] = [

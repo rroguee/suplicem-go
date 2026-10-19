@@ -12,6 +12,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { BANK_ACCOUNTS, BankAccount } from "@/constants/cartConstants";
 import { Palette } from "@/constants/theme";
 
+const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+  savings: "Cuenta de Ahorros",
+  checking: "Cuenta Corriente",
+  current: "Cuenta Corriente",
+  // Valores en español que ya venían así (legacy)
+  "Cuenta Corriente": "Cuenta Corriente",
+  "Cuenta de Ahorros": "Cuenta de Ahorros",
+};
+
+const getAccountTypeLabel = (type: string): string =>
+  ACCOUNT_TYPE_LABELS[type] ?? type;
+
+const getHolder = (bank: BankAccount): string =>
+  bank.accountHolder || bank.holder || "";
+
+const getRnc = (bank: BankAccount): string | null =>
+  bank.rnc || null;
+
 type CartPaymentSectionProps = {
   paymentMethod: "transfer" | "credit";
   onPaymentMethodChange: (method: "transfer" | "credit") => void;
@@ -144,23 +162,27 @@ export const CartPaymentSection: React.FC<CartPaymentSectionProps> = ({
               <Text style={styles.paymentDetailText}>
                 Tipo de Cuenta:{" "}
                 <Text style={{ fontWeight: "bold" }}>
-                  {selectedBank.accountType}
+                  {getAccountTypeLabel(selectedBank.accountType)}
                 </Text>
               </Text>
-              <Text style={styles.paymentDetailText}>
-                RNC:{" "}
-                <Text style={{ fontWeight: "bold" }}>{selectedBank.rnc}</Text>
-              </Text>
+              {getRnc(selectedBank) ? (
+                <Text style={styles.paymentDetailText}>
+                  RNC:{" "}
+                  <Text style={{ fontWeight: "bold" }}>{getRnc(selectedBank)}</Text>
+                </Text>
+              ) : null}
               <Text style={styles.paymentDetailText}>
                 Moneda:{" "}
                 <Text style={{ fontWeight: "bold" }}>
                   {selectedBank.currency}
                 </Text>
               </Text>
-              <Text style={styles.paymentDetailText}>
-                Titular:{" "}
-                <Text style={{ fontWeight: "bold" }}>{selectedBank.holder}</Text>
-              </Text>
+              {getHolder(selectedBank) ? (
+                <Text style={styles.paymentDetailText}>
+                  Titular:{" "}
+                  <Text style={{ fontWeight: "bold" }}>{getHolder(selectedBank)}</Text>
+                </Text>
+              ) : null}
             </View>
           ) : (
             <View style={[styles.bankInfoBox, { alignItems: "center", paddingVertical: 16 }]}>
