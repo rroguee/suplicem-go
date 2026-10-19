@@ -96,8 +96,11 @@ const CartScreen: React.FC = () => {
         const mapped: BankAccount[] = accounts.map((b: any) => ({
           ...b,
           bankName: b.bankName || b.bank || "Banco",
+          accountType: b.accountType || "savings",
           currency: b.currency || "DOP (Pesos Dominicanos)",
-          holder: b.holder || b.accountHolder || "SUPLICEM S.R.L.",
+          accountHolder: b.accountHolder || b.holder || "",
+          holder: b.holder || b.accountHolder || "",
+          rnc: b.rnc || "",
         }));
         setBankAccountsList(mapped);
         setSelectedBankId((prevId) => {
