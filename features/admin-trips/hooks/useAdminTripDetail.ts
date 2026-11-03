@@ -68,9 +68,9 @@ export const useAdminTripDetail = () => {
     }
 
     const trimmedReason = cancellationReason.trim();
-    if (!trimmedReason) {
+    if (trimmedReason.length < 5) {
       showAlert({
-        message: "Debes ingresar un motivo para cancelar el viaje.",
+        message: "El motivo de cancelación debe tener al menos 5 caracteres.",
         type: "warning",
       });
       return;

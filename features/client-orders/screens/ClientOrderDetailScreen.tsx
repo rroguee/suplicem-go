@@ -95,6 +95,7 @@ export const ClientOrderDetailScreen: React.FC<
                   cementProductName={selectedOrder.items?.find((i: any) =>
                     i.unit === "fundas" || i.name?.toLowerCase().includes("cemento")
                   )?.name}
+                  destination={selectedOrder.deliveries?.[0]?.address}
                 />
               ))}
             </View>

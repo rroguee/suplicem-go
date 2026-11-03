@@ -4,8 +4,12 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Text,
+  TouchableOpacity,
 } from "react-native";
 import { useLogin } from "./hooks/useLogin";
+import { usePhoneLogin } from "./hooks/usePhoneLogin";
+import { PhoneLoginModal } from "./components/PhoneLoginModal";
 import { LoginHeader } from "./components/LoginHeader";
 import { LoginForm } from "./components/LoginForm";
 import { ForgotPasswordModal } from "./components/ForgotPasswordModal";
@@ -31,6 +35,8 @@ export const LoginScreen: React.FC = () => {
     handlePasswordReset,
     handleResendVerification,
   } = useLogin();
+
+  const phoneLogin = usePhoneLogin();
 
   return (
     <KeyboardAvoidingView
@@ -58,6 +64,24 @@ export const LoginScreen: React.FC = () => {
             setResendEmail(email || "");
             setResendModalVisible(true);
           }}
+        />
+
+        <TouchableOpacity style={styles.phoneButton} onPress={phoneLogin.open}>
+          <Text style={styles.phoneButtonText}>Ingresar con teléfono (SMS)</Text>
+        </TouchableOpacity>
+
+        <PhoneLoginModal
+          visible={phoneLogin.visible}
+          step={phoneLogin.step}
+          phone={phoneLogin.phone}
+          onChangePhone={phoneLogin.setPhone}
+          code={phoneLogin.code}
+          onChangeCode={phoneLogin.setCode}
+          isSubmitting={phoneLogin.isSubmitting}
+          onRequestCode={phoneLogin.requestCode}
+          onConfirmCode={phoneLogin.confirmCode}
+          onBackToPhone={phoneLogin.backToPhone}
+          onClose={phoneLogin.close}
         />
 
         <ForgotPasswordModal
@@ -90,5 +114,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 30,
     paddingVertical: 40,
+  },
+  phoneButton: {
+    marginTop: 16,
+    alignItems: "center",
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#0F294A",
+  },
+  phoneButtonText: {
+    color: "#0F294A",
+    fontWeight: "600",
+    fontSize: 14,
   },
 });

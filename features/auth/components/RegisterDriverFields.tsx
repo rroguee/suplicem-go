@@ -4,6 +4,10 @@ import { Control, Controller, FieldErrors, UseFormSetValue, UseFormWatch } from 
 import CustomPickerModal from "@/components/CustomPickerModal";
 import { RegisterFormData } from "@/types/users";
 import { DRIVER_VEHICLE_TON_OPTIONS } from "@/constants/cartConstants";
+import {
+  getVehicleBrandOptions,
+  getVehicleModelOptions,
+} from "@/constants/vehicleBrands";
 
 interface RegisterDriverFieldsProps {
   control: Control<RegisterFormData>;
@@ -19,13 +23,6 @@ export const RegisterDriverFields: React.FC<RegisterDriverFieldsProps> = ({
   errors,
 }) => {
   const brand = watch("vehicle.brand") || "";
-
-  const modelOptions: Record<string, string[]> = {
-    Toyota: ["Dyna", "Hilux", "Hiace"],
-    Hyundai: ["H100", "Porter", "Mighty"],
-    Isuzu: ["Elf", "NPR", "FRR"],
-    Mitsubishi: ["Canter", "Fuso", "L200"],
-  };
 
   return (
     <View style={styles.container}>
@@ -43,12 +40,9 @@ export const RegisterDriverFields: React.FC<RegisterDriverFieldsProps> = ({
               onChange(selectedBrand);
               setValue("vehicle.model", "");
             }}
-            options={[
-              { label: "Toyota", value: "Toyota" },
-              { label: "Hyundai", value: "Hyundai" },
-              { label: "Isuzu", value: "Isuzu" },
-              { label: "Mitsubishi", value: "Mitsubishi" },
-            ]}
+            options={getVehicleBrandOptions()}
+            searchable
+            searchPlaceholder="Buscar marca de camión..."
           />
         )}
       />
@@ -62,10 +56,7 @@ export const RegisterDriverFields: React.FC<RegisterDriverFieldsProps> = ({
             label="Modelo"
             selectedValue={value || ""}
             onValueChange={onChange}
-            options={(modelOptions[brand] || []).map((model) => ({
-              label: model,
-              value: model,
-            }))}
+            options={getVehicleModelOptions(brand)}
           />
         )}
       />

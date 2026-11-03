@@ -29,10 +29,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CartDeliverySection } from "@/components/cart/CartDeliverySection";
 import { CartItemCard } from "@/components/cart/CartItemCard";
 import { CartPaymentSection } from "@/components/cart/CartPaymentSection";
-import {
-  DeliveryPreferenceSelector,
-  DeliveryPreference,
-} from "@/components/cart/DeliveryPreferenceSelector";
 
 const CartScreen: React.FC = () => {
   const {
@@ -57,7 +53,6 @@ const CartScreen: React.FC = () => {
   const [customAddressText, setCustomAddressText] = useState("");
   const [customAdditionalInfo, setCustomAdditionalInfo] = useState("");
   const [saveAddressToProfile, setSaveAddressToProfile] = useState(false);
-  const [deliveryPreference, setDeliveryPreference] = useState<DeliveryPreference>("partial");
 
   // Opciones de pago (Transferencia / Crédito)
   const [paymentMethod, setPaymentMethod] = useState<"transfer" | "credit">("transfer");
@@ -255,7 +250,6 @@ const CartScreen: React.FC = () => {
 
     const dataToSend: any = {
       deliveryType,
-      deliveryPreference: deliveryType === "domicilio" ? deliveryPreference : undefined,
       deliveryAddress: deliveryType === "domicilio" ? selectedAddress : undefined,
       deliveries: formattedDeliveries,
       items: formattedItems,
@@ -358,13 +352,6 @@ const CartScreen: React.FC = () => {
                 saveAddressToProfile={saveAddressToProfile}
                 onToggleSaveAddress={setSaveAddressToProfile}
               />
-
-              {deliveryType === "domicilio" && (
-                <DeliveryPreferenceSelector
-                  preference={deliveryPreference}
-                  onSelectPreference={setDeliveryPreference}
-                />
-              )}
 
               <CartPaymentSection
                 paymentMethod={paymentMethod}

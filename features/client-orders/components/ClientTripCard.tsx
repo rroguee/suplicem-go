@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import StatusBadge from "@/components/StatusBadge";
 import { tonsToBags } from "@/constants/cartConstants";
+import { calculateTripEstimate, WAREHOUSE_LOCATION } from "@/utils/tripEstimate";
 
 interface ClientTripCardProps {
   trip: any;
@@ -11,6 +12,7 @@ interface ClientTripCardProps {
   onWhatsappDriver?: (phone?: string) => void;
   isCementOrder?: boolean;
   cementProductName?: string;
+  destination?: { latitude?: number | string; longitude?: number | string } | null;
 }
 
 export const ClientTripCard: React.FC<ClientTripCardProps> = ({
@@ -20,11 +22,19 @@ export const ClientTripCard: React.FC<ClientTripCardProps> = ({
   onWhatsappDriver,
   isCementOrder = true,
   cementProductName,
+  destination,
 }) => {
   const driver = trip.driver;
   const isCompleted = trip.status === "completed";
   const tripTons = Number(trip.totalTons) || 0;
   const tripBags = tonsToBags(tripTons, cementProductName);
+  const estimate =
+    destination?.latitude && destination?.longitude
+      ? calculateTripEstimate(WAREHOUSE_LOCATION, {
+          latitude: Number(destination.latitude),
+          longitude: Number(destination.longitude),
+        })
+      : null;
 
   return (
     <View style={[styles.card, isCompleted && styles.completedCard]}>
@@ -45,6 +55,15 @@ export const ClientTripCard: React.FC<ClientTripCardProps> = ({
         </View>
         <StatusBadge status={trip.status || "available"} size="small" />
       </View>
+
+      {!isCompleted && estimate && (
+        <View style={styles.etaBadge}>
+          <Ionicons name="time-outline" size={14} color="#1E40AF" />
+          <Text style={styles.etaText}>
+            Llegada estimada: ~{estimate.durationMinutes} min ({estimate.distanceKm} km)
+          </Text>
+        </View>
+      )}
 
       {/* Datos del Conductor */}
       <View style={styles.driverSection}>
@@ -166,6 +185,24 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: "bold",
     color: "#0F294A",
+  },
+  etaBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  etaText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#1E40AF",
+    flex: 1,
   },
   driverSection: {
     marginBottom: 10,

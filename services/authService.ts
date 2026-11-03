@@ -5,6 +5,14 @@ export const login = async (email: string, password: string) => {
   return await safeRequest(() => api.post("/auth/login", { email, password }));
 };
 
+export const requestPhoneOtp = async (phone: string) => {
+  return await safeRequest(() => api.post("/auth/otp/request", { phone }));
+};
+
+export const verifyPhoneOtp = async (phone: string, code: string) => {
+  return await safeRequest(() => api.post("/auth/otp/verify", { phone, code }));
+};
+
 export const recoverPassword = async (email: string) => {
   return await safeRequest(() =>
     api.post("/auth/recover-password", { email })
