@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,7 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE } from "@/components/MapViewWrapper";
+import { cleanFormattedAddress } from "@/utils/addressFormatter";
 
 interface AddressPickerProps {
   initialValue?: string;
@@ -25,12 +26,15 @@ interface AddressPickerProps {
   }) => void;
 }
 
-import { cleanFormattedAddress } from "@/utils/addressFormatter";
-
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
+const createSessionToken = () =>
+  `mob-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+const createPlaceId = (prefix: string) => `${prefix}-${Date.now()}`;
+
 export default function AddressPicker({ onPlaceSelected, initialValue = "" }: AddressPickerProps) {
-  const [query, setQuery] = useState(initialValue);
+  const [query, setQuery] = useState(initialValue ?? "");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingGps, setLoadingGps] = useState(false);
@@ -48,16 +52,10 @@ export default function AddressPicker({ onPlaceSelected, initialValue = "" }: Ad
 
   const getSessionToken = () => {
     if (!sessionTokenRef.current) {
-      sessionTokenRef.current = `mob-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      sessionTokenRef.current = createSessionToken();
     }
     return sessionTokenRef.current;
   };
-
-  useEffect(() => {
-    if (initialValue && initialValue !== query) {
-      setQuery(initialValue);
-    }
-  }, [initialValue]);
 
   // Reverse geocoding con Google Geocoding API
   const reverseGeocodeGoogle = async (lat: number, lng: number) => {
@@ -122,7 +120,7 @@ export default function AddressPicker({ onPlaceSelected, initialValue = "" }: Ad
 
     // Notificar cambio inmediato (sin forzar coordenadas fijas)
     onPlaceSelected({
-      placeId: `custom-${Date.now()}`,
+      placeId: createPlaceId("custom"),
       description: text,
       latitude: 0,
       longitude: 0,
@@ -165,7 +163,7 @@ export default function AddressPicker({ onPlaceSelected, initialValue = "" }: Ad
       updatedExactOption.longitude = geocoded.longitude;
       // Notificar con coordenadas reales geocodificadas
       onPlaceSelected({
-        placeId: `custom-geocoded-${Date.now()}`,
+        placeId: createPlaceId("custom-geocoded"),
         description: text,
         latitude: geocoded.latitude,
         longitude: geocoded.longitude,
@@ -250,7 +248,7 @@ export default function AddressPicker({ onPlaceSelected, initialValue = "" }: Ad
 
     if (item.isExact || !item.isGoogle) {
       onPlaceSelected({
-        placeId: item.id || `loc-${Date.now()}`,
+        placeId: item.id || createPlaceId("loc"),
         description: finalDescription,
         latitude: item.latitude || 0,
         longitude: item.longitude || 0,
@@ -280,7 +278,7 @@ export default function AddressPicker({ onPlaceSelected, initialValue = "" }: Ad
         latitude: loc?.lat || 0,
         longitude: loc?.lng || 0,
       });
-    } catch (error) {
+    } catch {
       onPlaceSelected({
         placeId: item.placeId,
         description: finalDescription,
@@ -325,7 +323,7 @@ export default function AddressPicker({ onPlaceSelected, initialValue = "" }: Ad
       });
 
       setPinLocation({ latitude: lat, longitude: lng });
-    } catch (e) {
+    } catch {
       Alert.alert("Error de GPS", "No pudimos obtener tu ubicación actual. Intenta de nuevo.");
     } finally {
       setLoadingGps(false);
@@ -348,7 +346,7 @@ export default function AddressPicker({ onPlaceSelected, initialValue = "" }: Ad
         startLng = currentLocation.coords.longitude;
         setPinLocation({ latitude: startLat, longitude: startLng });
       }
-    } catch (e) {}
+    } catch {}
 
     updatePinGeocode(startLat, startLng);
   };

@@ -6,9 +6,8 @@ import { AuthContext } from "@/context/authContext";
 import { useLoading } from "@/context/loadingContext";
 import { updateDriverProfile } from "@/services/userService";
 import { Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
-import React, { useContext, useEffect, useState } from "react";
+import React, { startTransition, useContext, useEffect, useState } from "react";
 import {
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -81,12 +80,14 @@ const DriverSettingsMainScreen: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      setPhone(user.phone || "");
-      setVehicleBrand(user.vehicle?.brand || "");
-      setVehicleModel(user.vehicle?.model || "");
-      setVehicleYear(user.vehicle?.year || "");
-      setVehicleTons(user.vehicle?.tons || "");
-      setVehiclePlateNumber(user.vehicle?.plateNumber || "");
+      startTransition(() => {
+        setPhone(user.phone || "");
+        setVehicleBrand(user.vehicle?.brand || "");
+        setVehicleModel(user.vehicle?.model || "");
+        setVehicleYear(user.vehicle?.year || "");
+        setVehicleTons(user.vehicle?.tons || "");
+        setVehiclePlateNumber(user.vehicle?.plateNumber || "");
+      });
     }
   }, [user]);
 

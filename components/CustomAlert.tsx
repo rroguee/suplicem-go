@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Animated,
   Text,
@@ -60,8 +60,8 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   isVisible,
   onClose,
 }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(0));
+  const [scaleAnim] = useState(() => new Animated.Value(0.8));
   const timerRef = useRef<any>(null);
 
   const { backgroundColor, secondaryColor, iconChar } = getTypeStyles(type);

@@ -38,7 +38,7 @@ export default function TabLayout() {
               ? "Disponibles"
               : "Home",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <IconSymbol size={28} name="house.fill" color={color as string} />
           ),
         }}
       />
@@ -61,7 +61,7 @@ export default function TabLayout() {
                   : "paper-plane"
               }
               size={28}
-              color={color}
+              color={color as string}
             />
           ),
         }}
@@ -74,7 +74,7 @@ export default function TabLayout() {
               ? "Cuenta"
               : "Configuración",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="settings" size={28} color={color} />
+            <Ionicons name="settings" size={28} color={color as string} />
           ),
         }}
       />
