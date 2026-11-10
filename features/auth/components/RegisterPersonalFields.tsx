@@ -11,6 +11,8 @@ interface RegisterPersonalFieldsProps {
   onLookupCedula?: () => void;
   isLookingUpCedula?: boolean;
   identificationType?: string;
+  personType?: "fisica" | "juridica";
+  onPersonTypeChange?: (type: "fisica" | "juridica") => void;
 }
 
 export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
@@ -19,9 +21,92 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
   onLookupCedula,
   isLookingUpCedula,
   identificationType = "Cedula",
+  personType = "fisica",
+  onPersonTypeChange,
 }) => {
   return (
     <View>
+      {/* Selector Persona Física vs Empresa */}
+      <View style={styles.personTypeWrapper}>
+        <Text style={styles.sectionLabel}>Modalidad de Registro</Text>
+        <View style={styles.personTypeContainer}>
+          <TouchableOpacity
+            style={[
+              styles.personTypeTab,
+              personType === "fisica" && styles.personTypeTabActive,
+            ]}
+            onPress={() => onPersonTypeChange?.("fisica")}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.personTypeText,
+                personType === "fisica" && styles.personTypeTextActive,
+              ]}
+            >
+              👤 Persona Física
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.personTypeTab,
+              personType === "juridica" && styles.personTypeTabActive,
+            ]}
+            onPress={() => onPersonTypeChange?.("juridica")}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.personTypeText,
+                personType === "juridica" && styles.personTypeTextActive,
+              ]}
+            >
+              🏢 Empresa (RNC)
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Campos dinámicos si es Empresa */}
+      {personType === "juridica" && (
+        <View style={styles.companyCard}>
+          <Text style={styles.companyCardTitle}>Datos de la Empresa</Text>
+          <Controller
+            control={control}
+            name="companyRnc"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="RNC de la Empresa (9 u 11 dígitos)"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+          {errors.companyRnc && (
+            <Text style={styles.error}>{errors.companyRnc.message}</Text>
+          )}
+
+          <Controller
+            control={control}
+            name="companyName"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Razón Social / Nombre Comercial"
+                placeholderTextColor="#999"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+          {errors.companyName && (
+            <Text style={styles.error}>{errors.companyName.message}</Text>
+          )}
+        </View>
+      )}
       <Controller
         control={control}
         name="identificationType"
@@ -206,5 +291,60 @@ const styles = StyleSheet.create({
     color: "#E31E24",
     fontSize: 13,
     fontWeight: "bold",
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#334155",
+    marginBottom: 6,
+  },
+  personTypeWrapper: {
+    marginBottom: 12,
+  },
+  personTypeContainer: {
+    flexDirection: "row",
+    backgroundColor: "#F1F5F9",
+    borderRadius: 8,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  personTypeTab: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 6,
+  },
+  personTypeTabActive: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  personTypeText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#64748B",
+  },
+  personTypeTextActive: {
+    color: "#0F172A",
+    fontWeight: "700",
+  },
+  companyCard: {
+    backgroundColor: "#F8FAFC",
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 12,
+  },
+  companyCardTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0F294A",
+    marginBottom: 8,
   },
 });

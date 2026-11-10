@@ -17,6 +17,25 @@ const validateNameNoNumbersOrBinary = (value: string | undefined) => {
 };
 
 export const registerSchema = yup.object({
+  personType: yup.string().oneOf(["fisica", "juridica"]).default("fisica"),
+  companyRnc: yup.string().when("personType", {
+    is: "juridica",
+    then: (schema) =>
+      schema
+        .required("El RNC de la empresa es obligatorio")
+        .test("is-valid-rnc", "El RNC debe contener 9 u 11 dígitos numéricos", (value) => {
+          if (!value) return false;
+          const clean = value.replace(/[^0-9]/g, "");
+          return clean.length === 9 || clean.length === 11;
+        }),
+    otherwise: (schema) => schema.optional(),
+  }),
+  companyName: yup.string().when("personType", {
+    is: "juridica",
+    then: (schema) =>
+      schema.required("El nombre comercial o razón social es obligatorio"),
+    otherwise: (schema) => schema.optional(),
+  }),
   identificationType: yup.string().required("Tipo de documento requerido"),
   identification: yup
     .string()

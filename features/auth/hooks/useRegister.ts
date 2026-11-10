@@ -30,6 +30,9 @@ export const useRegister = () => {
   } = useForm<RegisterFormData>({
     resolver: yupResolver(registerSchema) as any,
     defaultValues: {
+      personType: "fisica",
+      companyRnc: "",
+      companyName: "",
       identificationType: "Cedula",
       identification: "",
       email: "",
@@ -52,6 +55,7 @@ export const useRegister = () => {
 
   const addresses = watch("addresses") || [];
   const userType = watch("userType");
+  const personType = watch("personType") || "fisica";
   const identificationType = watch("identificationType");
   const [isLookingUpCedula, setIsLookingUpCedula] = useState(false);
 
@@ -235,5 +239,6 @@ export const useRegister = () => {
     handleLookupCedula,
     isLookingUpCedula,
     identificationType,
+    personType,
   };
 };

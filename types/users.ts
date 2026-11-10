@@ -28,6 +28,9 @@ export type User = {
   lastNames: string;
   phone: string;
   userType: "client" | "driver" | "admin" | "seller";
+  personType?: "fisica" | "juridica";
+  companyRnc?: string;
+  companyName?: string;
   driverCode?: string;
   sellerCode?: string;
   sellerId?: string;

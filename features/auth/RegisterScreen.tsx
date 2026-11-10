@@ -40,6 +40,7 @@ export const RegisterScreen: React.FC = () => {
     handleLookupCedula,
     isLookingUpCedula,
     identificationType,
+    personType,
   } = useRegister();
 
   return (
@@ -61,6 +62,8 @@ export const RegisterScreen: React.FC = () => {
           onLookupCedula={handleLookupCedula}
           isLookingUpCedula={isLookingUpCedula}
           identificationType={identificationType}
+          personType={personType}
+          onPersonTypeChange={(type) => setValue("personType", type)}
         />
 
         <RegisterIdUploadCard
