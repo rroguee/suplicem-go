@@ -10,7 +10,7 @@ export default function SettingsLayout() {
       />
       <Stack.Screen
         name="(admin)"
-        options={{ title: "Administrar", headerShown: true }}
+        options={{ title: "Administrar", headerShown: false }}
       />
       <Stack.Screen
         name="(client)"

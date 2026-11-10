@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { AuthContext } from "@/context/authContext";
 import { useAlert } from "@/context/alertContext";
 import { useLoading } from "@/context/loadingContext";
 import { createUserAccountByAdmin } from "@/services/userService";
@@ -18,11 +19,16 @@ export function useAdminCreateUser() {
   const [email, setEmail] = useState("");
   const [identification, setIdentification] = useState("");
   const [phone, setPhone] = useState("");
-  const [userType, setUserType] = useState<"client" | "driver" | "admin">("client");
+  const [userType, setUserType] = useState<"client" | "driver" | "admin" | "seller">("client");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [clientAddress, setClientAddress] = useState<any>(null);
   const [vehicle, setVehicle] = useState<VehicleData>(INITIAL_VEHICLE);
+
+  const { user: authUser } = useContext(AuthContext);
+  const isSeller = authUser?.userType === "seller";
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const { show, hide } = useLoading();
   const { showAlert } = useAlert();
@@ -94,6 +100,7 @@ export function useAdminCreateUser() {
       lastNames: cleanLastNames,
       phone: cleanPhone,
       userType,
+      sellerId: isSeller ? authUser?.uid : undefined,
     };
 
     if (userType === "client" && clientAddress?.description) {
@@ -114,13 +121,14 @@ export function useAdminCreateUser() {
       show();
       const res = await createUserAccountByAdmin(payload);
       if (res?.success) {
-        showAlert({
-          message: `Usuario con rol ${
-            userType === "driver" ? "Conductor" : userType === "admin" ? "Administrador" : "Cliente"
-          } registrado con éxito.`,
-          type: "success",
-        });
-        resetForm();
+        setSuccessMessage(
+          isSeller
+            ? `El cliente ${cleanNames} ${cleanLastNames} ha sido registrado y vinculado a tu cartera de ventas exitosamente.`
+            : `Usuario con rol ${
+                userType === "driver" ? "Conductor" : userType === "admin" ? "Administrador" : userType === "seller" ? "Vendedor" : "Cliente"
+              } registrado con éxito en el servidor.`
+        );
+        setShowSuccessModal(true);
       } else {
         showAlert({
           message: res?.message || "No se pudo registrar el usuario en el servidor.",
@@ -159,5 +167,10 @@ export function useAdminCreateUser() {
     vehicle,
     updateVehicle,
     handleCreateUser,
+    isSeller,
+    showSuccessModal,
+    setShowSuccessModal,
+    successMessage,
+    resetForm,
   };
 }

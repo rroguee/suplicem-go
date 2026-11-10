@@ -1,9 +1,8 @@
-import { ORDER_PREFIX } from "@/constants/UserConstants";
 import { useAlert } from "@/context/alertContext";
 import { useOrders } from "@/context/orderContext";
 import { getAllOrders } from "@/services/orderService";
 import { OrderStatus } from "@/types/orders";
-import { StatusBadge } from "@/components/StatusBadge";
+import { OrderCard } from "@/components/orders/OrderCard";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
@@ -19,7 +18,6 @@ import {
 } from "react-native";
 import { FilterChips, FilterOption } from "@/components/FilterChips";
 import { Palette } from "@/constants/theme";
-import { formatProductQuantity } from "@/constants/cartConstants";
 
 const ORDER_FILTER_OPTIONS: FilterOption<string>[] = [
   { id: "Todos", label: "Todas" },
@@ -167,61 +165,11 @@ const AdminOrdersScreen = () => {
             return orderB - orderA;
           })
           .map((order) => (
-            <TouchableOpacity
+            <OrderCard
               key={order.id}
-              style={[styles.card, (order as any).aiRiskFlag && styles.cardAiRisk]}
-              activeOpacity={0.8}
-              onPress={() => handleViewDetails(order.id)}
-            >
-              {(order as any).aiRiskFlag && (
-                <View style={styles.aiAlertBanner}>
-                  <Ionicons name="warning-outline" size={18} color="#991B1B" />
-                  <Text style={styles.aiAlertText}>
-                    Alerta de Seguridad: Contenido posiblemente alterado con inteligencia artificial
-                  </Text>
-                </View>
-              )}
-              <View style={styles.infoRow}>
-                <Text style={styles.id}>
-                  {ORDER_PREFIX.ORD}
-                  {order.orderNumber}
-                </Text>
-                <StatusBadge status={order.status} size="small" />
-              </View>
-
-              <Text style={styles.info}>
-                Cliente: {order.userNames} {order.userLastNames}
-              </Text>
-
-              <Text style={styles.info}>
-                Tipo de entrega: {order.deliveryType}
-              </Text>
-
-              <Text style={[styles.info, { marginTop: 8, fontWeight: "bold" }]}>
-                Productos:
-              </Text>
-
-              {order.items.map((item: any, idx: number) => (
-                <Text key={idx} style={styles.item}>
-                  - {item.name} - {formatProductQuantity(item.quantity, item.unit, item.name)}
-                </Text>
-              ))}
-
-              <View style={styles.buttonsContainer}>
-                <TouchableOpacity
-                  style={styles.viewDetailsButton}
-                  onPress={() => handleViewDetails(order.id)}
-                >
-                  <Text style={styles.buttonText}>Ver detalle</Text>
-                </TouchableOpacity>
-              </View>
-
-                {order.status === "rejected" && Boolean(order.rejectionReason || order.declineReason) && (
-                <Text style={styles.reasonText}>
-                  Motivo: {order.rejectionReason || order.declineReason}
-                </Text>
-              )}
-            </TouchableOpacity>
+              order={order}
+              onPressDetails={handleViewDetails}
+            />
           ))}
       </ScrollView>
     </>

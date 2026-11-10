@@ -8,8 +8,12 @@ export type Product = {
   id: string;
   name: string;
   price: number;
+  lotSize?: number;
+  lotPrice?: number;
+  lotPrices?: Record<string, number>;
   imageUrl: string;
   unit: string;
+  weightKg?: number;
 };
 
 type ProductCatalogCardProps = {
@@ -29,7 +33,15 @@ export const ProductCatalogCard: React.FC<ProductCatalogCardProps> = ({
         resizeMode="contain"
       />
       <Text style={styles.name}>{product.name}</Text>
-      <Text style={styles.price}>{formatRD(product.price)}</Text>
+      <Text style={styles.price}>{formatRD(product.price)} / funda</Text>
+      {(product.unit === "fundas" || product.name.toLowerCase().includes("cemento")) && (
+        <Text style={{ textAlign: "center", color: "#64748B", fontSize: 13, marginBottom: 8 }}>
+          Lote ({product.lotSize || 500} fundas):{" "}
+          <Text style={{ fontWeight: "700", color: Palette.primaryDark }}>
+            {formatRD(product.lotPrice || product.price * (product.lotSize || 500))}
+          </Text>
+        </Text>
+      )}
 
       <TouchableOpacity
         style={styles.addButton}

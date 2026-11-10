@@ -4,6 +4,7 @@ import { ProductSkeletonCard } from "@/components/home/ProductSkeletonCard";
 import { PromoBannerCarousel } from "@/components/home/PromoBannerCarousel";
 import { Palette } from "@/constants/theme";
 import { useAlert } from "@/context/alertContext";
+import { AuthContext } from "@/context/authContext";
 import { CartContext } from "@/context/cartContext";
 import { getProducts } from "@/services/productService";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,12 +29,18 @@ const ClientHomeScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedProductForQty, setSelectedProductForQty] = useState<Product | null>(null);
-  const [quantity, setQuantity] = useState("100");
+  const [quantity, setQuantity] = useState("50");
 
   const latestRequestIdRef = useRef(0);
   const router = useRouter();
-  const { addToCart, cart, updateProductInCart } = useContext(CartContext);
+  const { addToCart, cart, updateProductInCart, assistedClient } = useContext(CartContext);
+  const { user } = useContext(AuthContext);
   const { showAlert } = useAlert();
+
+  const isWholesaleAllowed =
+    user?.userType === "admin" ||
+    user?.userType === "seller" ||
+    Boolean(assistedClient);
 
   const fetchProductsFromBackend = React.useCallback(async (query: string, isPullToRefresh = false) => {
     const requestId = ++latestRequestIdRef.current;
@@ -72,24 +79,40 @@ const ClientHomeScreen: React.FC = () => {
 
   const openQuantityModal = (product: Product) => {
     setSelectedProductForQty(product);
-    setQuantity("100");
+    setQuantity("50");
   };
 
   const handleConfirmAddToCart = () => {
     if (!selectedProductForQty) return;
     const numQty = parseInt(quantity, 10);
 
-    if (isNaN(numQty) || numQty < 1) {
+    const isCement =
+      selectedProductForQty.unit === "fundas" ||
+      selectedProductForQty.name.toLowerCase().includes("cemento");
+
+    if (isCement && (numQty < 50 || numQty % 50 !== 0)) {
+      setSelectedProductForQty(null);
       showAlert({
-        message: "Por favor, ingresa una cantidad válida mayor a cero.",
+        message: "La compra mínima de cemento es de 50 fundas (en múltiplos de 50).",
         type: "warning",
       });
       return;
     }
 
-    if (numQty > 1000) {
+    if (!isWholesaleAllowed && numQty > 1000) {
+      setSelectedProductForQty(null);
       showAlert({
-        message: "La cantidad máxima permitida por producto es de 1,000 unidades.",
+        message:
+          "La cantidad máxima para compras directas es de 1,000 unidades. Para compras de mayor escala, contacte a su vendedor.",
+        type: "warning",
+      });
+      return;
+    }
+
+    if (isNaN(numQty) || numQty < 1) {
+      setSelectedProductForQty(null);
+      showAlert({
+        message: "Por favor, ingresa una cantidad válida mayor a cero.",
         type: "warning",
       });
       return;

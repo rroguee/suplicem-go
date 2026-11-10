@@ -4,6 +4,19 @@ import { isValidCedula, isValidPassport } from "@/utils/validationUtils";
 
 const generateTempPlaceId = () => `new-${Date.now()}`;
 
+export interface NewAddressFormData {
+  placeId: string;
+  description: string;
+  latitude: number;
+  longitude: number;
+  recipientName: string;
+  recipientDocument: string;
+  recipientDocumentType: string;
+  userUid: string;
+  additionalInfo: string;
+  saveToProfile?: boolean;
+}
+
 export const useNewDeliveryAddress = (
   onAddressCreated?: (address: any) => void,
   defaultClientData?: {
@@ -14,7 +27,7 @@ export const useNewDeliveryAddress = (
   }
 ) => {
   const { showAlert } = useAlert();
-  const getInitialAddressData = () => ({
+  const getInitialAddressData = (): NewAddressFormData => ({
     placeId: "",
     description: "",
     latitude: 0,
@@ -24,9 +37,10 @@ export const useNewDeliveryAddress = (
     recipientDocumentType: defaultClientData?.recipientDocumentType || "Cédula",
     userUid: defaultClientData?.userUid || "",
     additionalInfo: "",
+    saveToProfile: true,
   });
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
-  const [newAddressData, setNewAddressData] = useState(getInitialAddressData);
+  const [newAddressData, setNewAddressData] = useState<NewAddressFormData>(getInitialAddressData);
   const resetForm = () => {
     setNewAddressData(getInitialAddressData());
     setIsAddingNewAddress(false);

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { EditDriverVehicleModal } from "./EditDriverVehicleModal";
+import { AssignSellerModal } from "./AssignSellerModal";
 
 interface AdminUserRoleCardProps {
   user: any;
@@ -10,6 +11,7 @@ interface AdminUserRoleCardProps {
 
 export const AdminUserRoleCard: React.FC<AdminUserRoleCardProps> = ({ user, onRefresh }) => {
   const [showVehicleModal, setShowVehicleModal] = useState(false);
+  const [showSellerModal, setShowSellerModal] = useState(false);
 
   if (user?.userType === "driver") {
     const driverCode =
@@ -71,8 +73,50 @@ export const AdminUserRoleCard: React.FC<AdminUserRoleCardProps> = ({ user, onRe
 
   if (user?.userType === "client") {
     const addresses = user?.addresses || [];
+    const hasSeller = Boolean(user.sellerId);
+    const sellerDisplay = user.sellerName
+      ? `[${user.sellerCode || "VEND-XXXX"}] ${user.sellerName}`
+      : user.sellerId
+      ? `ID: ${user.sellerId}`
+      : null;
+
     return (
       <View style={styles.card}>
+        {/* Sección: Vendedor Asignado */}
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <Text style={styles.sectionSubtitle}>Vendedor Asignado</Text>
+          <TouchableOpacity onPress={() => setShowSellerModal(true)}>
+            <Text style={{ fontSize: 13, color: "#E31E24", fontWeight: "700" }}>
+              {hasSeller ? "Cambiar" : "+ Asignar"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {hasSeller ? (
+          <View style={[styles.vehicleBox, { backgroundColor: "#F0F9FF", borderColor: "#BAE6FD" }]}>
+            <View style={styles.vehicleRow}>
+              <Ionicons name="briefcase-outline" size={18} color="#0284C7" />
+              <Text style={[styles.vehicleText, { color: "#0369A1", fontWeight: "700" }]}>
+                {sellerDisplay}
+              </Text>
+            </View>
+            {user.sellerPhone ? (
+              <View style={styles.vehicleRow}>
+                <Ionicons name="call-outline" size={18} color="#0284C7" />
+                <Text style={[styles.vehicleText, { color: "#0369A1" }]}>
+                  Tel: {user.sellerPhone}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : (
+          <Text style={styles.emptyText}>Sin vendedor asignado (cartera general libre).</Text>
+        )}
+
+        {/* Separador visual */}
+        <View style={{ height: 1, backgroundColor: "#F1F5F9", marginVertical: 14 }} />
+
+        {/* Sección: Direcciones Registradas */}
         <Text style={styles.sectionTitle}>Direcciones Registradas ({addresses.length})</Text>
         {addresses.length === 0 ? (
           <Text style={styles.emptyText}>El cliente aún no tiene direcciones registradas.</Text>
@@ -89,6 +133,37 @@ export const AdminUserRoleCard: React.FC<AdminUserRoleCardProps> = ({ user, onRe
             </View>
           ))
         )}
+
+        {/* Modal de Asignación */}
+        <AssignSellerModal
+          visible={showSellerModal}
+          onClose={() => setShowSellerModal(false)}
+          clientId={user.uid || user.id}
+          currentSellerId={user.sellerId}
+          onSuccess={() => onRefresh && onRefresh()}
+        />
+      </View>
+    );
+  }
+
+  if (user?.userType === "seller") {
+    const sellerCode =
+      user?.sellerCode || (user?.uid ? `VEND-${user.uid.slice(0, 5).toUpperCase()}` : "VEND-XXXX");
+    return (
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Información de Vendedor</Text>
+        <View style={styles.badgeRow}>
+          <Text style={styles.label}>Código Comercial:</Text>
+          <View style={[styles.codeBadge, { backgroundColor: "#E0F2FE", borderColor: "#BAE6FD" }]}>
+            <Text style={[styles.codeText, { color: "#0369A1" }]}>{sellerCode}</Text>
+          </View>
+        </View>
+        <View style={[styles.adminBox, { backgroundColor: "#F0F9FF", borderColor: "#BAE6FD", marginTop: 12 }]}>
+          <Ionicons name="pricetag" size={20} color="#0284C7" />
+          <Text style={[styles.adminText, { color: "#0369A1" }]}>
+            Cuenta comercial con permisos para gestión de cartera de clientes y ventas asistidas.
+          </Text>
+        </View>
       </View>
     );
   }

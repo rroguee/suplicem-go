@@ -42,6 +42,7 @@ type CartPaymentSectionProps = {
   onRemoveReceipt: () => void;
   creditNote: string;
   onChangeCreditNote: (note: string) => void;
+  hasAssignedSeller?: boolean;
 };
 
 export const CartPaymentSection: React.FC<CartPaymentSectionProps> = ({
@@ -56,6 +57,7 @@ export const CartPaymentSection: React.FC<CartPaymentSectionProps> = ({
   onRemoveReceipt,
   creditNote,
   onChangeCreditNote,
+  hasAssignedSeller = true,
 }) => {
   return (
     <View style={styles.container}>
@@ -88,25 +90,47 @@ export const CartPaymentSection: React.FC<CartPaymentSectionProps> = ({
           style={[
             styles.paymentOptionTab,
             paymentMethod === "credit" && styles.paymentOptionTabActive,
+            !hasAssignedSeller && styles.paymentOptionTabDisabled,
           ]}
-          onPress={() => onPaymentMethodChange("credit")}
+          onPress={() => {
+            if (hasAssignedSeller) {
+              onPaymentMethodChange("credit");
+            }
+          }}
+          activeOpacity={hasAssignedSeller ? 0.7 : 1}
         >
           <Ionicons
             name="hand-left-outline"
             size={18}
-            color={paymentMethod === "credit" ? "#fff" : Palette.accent}
+            color={
+              !hasAssignedSeller
+                ? "#94A3B8"
+                : paymentMethod === "credit"
+                ? "#fff"
+                : Palette.accent
+            }
           />
           <Text
             style={[
               styles.paymentOptionText,
               paymentMethod === "credit" && styles.paymentOptionTextActive,
+              !hasAssignedSeller && styles.paymentOptionTextDisabled,
             ]}
             numberOfLines={2}
           >
-            Pago a Crédito
+            Pago a Crédito {!hasAssignedSeller && "(Restringido)"}
           </Text>
         </TouchableOpacity>
       </View>
+
+      {!hasAssignedSeller && (
+        <View style={styles.creditRestrictedNotice}>
+          <Ionicons name="information-circle-outline" size={16} color="#B45309" />
+          <Text style={styles.creditRestrictedText}>
+            El pago a crédito requiere un vendedor asignado a tu cartera.
+          </Text>
+        </View>
+      )}
 
       {paymentMethod === "transfer" ? (
         <View style={styles.paymentDetailCard}>
@@ -432,5 +456,30 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 12,
     fontWeight: "bold",
+  },
+  paymentOptionTabDisabled: {
+    backgroundColor: "#F1F5F9",
+    borderColor: "#E2E8F0",
+    opacity: 0.65,
+  },
+  paymentOptionTextDisabled: {
+    color: "#94A3B8",
+  },
+  creditRestrictedNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#FEF3C7",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  creditRestrictedText: {
+    fontSize: 12,
+    color: "#92400E",
+    fontWeight: "600",
+    flex: 1,
   },
 });

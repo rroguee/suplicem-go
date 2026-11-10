@@ -90,16 +90,11 @@ export const DeliveriesSection: React.FC<DeliveriesSectionProps> = ({
               key={delivery.id || `delivery-edit-${idx}`}
               delivery={delivery}
               index={idx}
-              users={users}
+              clientName={`${order.userNames || ""} ${order.userLastNames || ""}`.trim() || "Cliente de la orden"}
               productOptions={productOptions}
-              maxQuantity={
-                getAvailableQuantity(delivery.productId, delivery.id) +
-                (Number(delivery.quantity) || 0)
-              }
-              onUserSelection={onUserSelection}
               onUpdateDelivery={onUpdateDelivery}
               onRemoveDelivery={onRemoveDelivery}
-              onValidateQuantity={(qty) => validateQuantity(delivery, qty)}
+              canRemove={editedDeliveries.length > 1}
             />
           ))
         ) : (

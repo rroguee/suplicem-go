@@ -30,7 +30,7 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   current: "Cuenta Corriente",
 };
 
-const ACCOUNT_TYPES: Array<{ label: string; value: CreateBankAccountPayload["accountType"] }> = [
+const ACCOUNT_TYPES: { label: string; value: CreateBankAccountPayload["accountType"] }[] = [
   { label: "Ahorros", value: "savings" },
   { label: "Corriente", value: "checking" },
   { label: "Cuenta Corriente", value: "current" },
@@ -57,7 +57,7 @@ const BankAccountsScreen: React.FC = () => {
   const { showAlert } = useAlert();
 
   // ─── Carga de datos ──────────────────────────────────────────────────────────
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     try {
       show();
       const data = await getBankAccounts();
@@ -68,12 +68,12 @@ const BankAccountsScreen: React.FC = () => {
     } finally {
       hide();
     }
-  };
+  }, [show, hide, showAlert]);
 
   useFocusEffect(
     useCallback(() => {
       fetchAccounts();
-    }, [])
+    }, [fetchAccounts])
   );
 
   // ─── Modal helpers ────────────────────────────────────────────────────────────

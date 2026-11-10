@@ -4,6 +4,9 @@ import protectedApi from "./protectedApi";
 export const createProduct = async (product: {
   name: string;
   price: number;
+  lotSize?: number;
+  lotPrice?: number;
+  manualLotPrices?: Record<string, number>;
   unit: string;
   imageUrl?: string;
   imageUri?: string;
@@ -22,6 +25,9 @@ export const createProduct = async (product: {
     formData.append("unit", product.unit);
     if (product.weightKg !== undefined && product.weightKg !== null) {
       formData.append("weightKg", product.weightKg.toString());
+    }
+    if (product.manualLotPrices) {
+      formData.append("manualLotPrices", JSON.stringify(product.manualLotPrices));
     }
 
     const result = await safeRequest(() =>
@@ -58,13 +64,41 @@ export const updateProduct = async (
   product: Partial<{
     name: string;
     price: number;
+    lotSize?: number;
+    lotPrice?: number;
+    lotPrices?: Record<string, number>;
+    manualLotPrices?: Record<string, number>;
     unit: string;
     imageUrl?: string;
+    imageUri?: string;
     weightKg?: number;
   }>
 ) => {
-  const response = await protectedApi.put(`/products/${id}`, product);
-  return response.data;
+  if (product.imageUri && product.imageUri.startsWith("file:")) {
+    const formData = new FormData();
+    const file: any = {
+      uri: product.imageUri,
+      name: "producto.jpg",
+      type: "image/jpeg",
+    };
+    formData.append("image", file);
+    if (product.name) formData.append("name", product.name);
+    if (product.price !== undefined) formData.append("price", product.price.toString());
+    if (product.unit) formData.append("unit", product.unit);
+    if (product.weightKg !== undefined) formData.append("weightKg", product.weightKg.toString());
+    if (product.manualLotPrices) {
+      formData.append("manualLotPrices", JSON.stringify(product.manualLotPrices));
+    }
+    const result = await safeRequest(() =>
+      protectedApi.put(`/products/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+    );
+    return result.success ? result.data : { success: false, message: result.message };
+  }
+
+  const result = await safeRequest(() => protectedApi.put(`/products/${id}`, product));
+  return result.success ? result.data : { success: false, message: result.message };
 };
 
 export const deleteProduct = async (id: string) => {

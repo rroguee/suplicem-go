@@ -20,6 +20,10 @@ export default function HomeLayout() {
         name="(driver)"
         options={{ headerShown: false, title: "Conductor" }}
       />
+      <Stack.Screen
+        name="seller-order-detail"
+        options={{ headerShown: false, title: "Detalle de Orden" }}
+      />
     </Stack>
   );
 }

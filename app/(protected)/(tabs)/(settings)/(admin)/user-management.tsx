@@ -1,26 +1,29 @@
 import { useAlert } from "@/context/alertContext";
 import { useLoading } from "@/context/loadingContext";
-import { useMountEffect } from "@/hooks/lifeCicle";
 import { activeOrInactiveUser, getUsers } from "@/services/userService";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FilterChips, FilterOption } from "@/components/FilterChips";
+import { SearchBar } from "@/components/common/SearchBar";
+import { ScreenHeader } from "@/components/ScreenHeader";
+import { Palette } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState, useMemo, useContext } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useState, useMemo, useContext, useCallback } from "react";
 import { AuthContext } from "@/context/authContext";
 import {
   Alert,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 
-const ROLE_OPTIONS: FilterOption<"all" | "client" | "driver" | "admin">[] = [
+const ROLE_OPTIONS: FilterOption<"all" | "client" | "seller" | "driver" | "admin">[] = [
   { id: "all", label: "Todos los roles" },
   { id: "client", label: "Clientes" },
+  { id: "seller", label: "Vendedores" },
   { id: "driver", label: "Conductores" },
   { id: "admin", label: "Administradores" },
 ];
@@ -34,8 +37,9 @@ const STATUS_OPTIONS: FilterOption<"all" | "active" | "inactive">[] = [
 const UsersListScreen: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "client" | "driver" | "admin">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "client" | "seller" | "driver" | "admin">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [refreshing, setRefreshing] = useState(false);
   const { show, hide } = useLoading();
   const { showAlert } = useAlert();
   const { user: authUser } = useContext(AuthContext);
@@ -95,9 +99,17 @@ const UsersListScreen: React.FC = () => {
     }
   };
 
-  useMountEffect(async () => {
-    fetchUsers();
-  });
+  useFocusEffect(
+    useCallback(() => {
+      fetchUsers();
+    }, [])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchUsers();
+    setRefreshing(false);
+  };
 
   const handleActivate = async (uid: string) => {
     try {
@@ -179,10 +191,11 @@ const UsersListScreen: React.FC = () => {
           return true;
         });
 
-    const counts = { all: relevantUsers.length, client: 0, driver: 0, admin: 0 };
+    const counts = { all: relevantUsers.length, client: 0, seller: 0, driver: 0, admin: 0 };
     relevantUsers.forEach((u) => {
       const role = u.userType?.toLowerCase();
       if (role === "client") counts.client++;
+      else if (role === "seller") counts.seller++;
       else if (role === "driver") counts.driver++;
       else if (role === "admin") counts.admin++;
     });
@@ -232,6 +245,8 @@ const UsersListScreen: React.FC = () => {
           user.email?.toLowerCase().includes(query) ||
           user.identification?.toLowerCase().includes(query) ||
           user.driverCode?.toLowerCase().includes(query) ||
+          user.sellerCode?.toLowerCase().includes(query) ||
+          user.sellerName?.toLowerCase().includes(query) ||
           user.vehicle?.plateNumber?.toLowerCase().includes(query)
         );
       })
@@ -246,6 +261,8 @@ const UsersListScreen: React.FC = () => {
         return "Conductor";
       case "client":
         return "Cliente";
+      case "seller":
+        return "Vendedor";
       default:
         return role;
     }
@@ -255,15 +272,25 @@ const UsersListScreen: React.FC = () => {
     <ScrollView
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 120 }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[Palette.primary]}
+        />
+      }
     >
-      <Text style={styles.title}>Lista de Usuarios</Text>
+      <ScreenHeader
+        title="Lista de Usuarios"
+        showBack={true}
+        style={{ marginBottom: 16 }}
+      />
 
-      <TextInput
-        placeholder="Buscar usuario..."
-        placeholderTextColor="#999"
-        style={styles.input}
+      <SearchBar
+        placeholder="Buscar por nombre, cédula o vendedor..."
         value={search}
         onChangeText={setSearch}
+        containerStyle={{ marginBottom: 16 }}
       />
 
       {/* Filtro por Rol */}
@@ -336,6 +363,32 @@ const UsersListScreen: React.FC = () => {
                 ID Conductor:{" "}
                 <Text style={{ fontWeight: "bold", color: "#E31E24" }}>
                   {user.driverCode || (user.uid ? `COND-${user.uid.slice(0, 5).toUpperCase()}` : "COND-XXXX")}
+                </Text>
+              </Text>
+            </View>
+          )}
+
+          {user.userType === "seller" && (
+            <View style={styles.driverIdBadgeAdmin}>
+              <Ionicons name="pricetag-outline" size={16} color="#0F294A" />
+              <Text style={styles.driverIdAdminText}>
+                ID Vendedor:{" "}
+                <Text style={{ fontWeight: "bold", color: "#0F294A" }}>
+                  {(user as any).sellerCode || (user.uid ? `VEND-${user.uid.slice(0, 5).toUpperCase()}` : "VEND-XXXX")}
+                </Text>
+              </Text>
+            </View>
+          )}
+
+          {user.userType === "client" && user.sellerId && (
+            <View style={styles.clientSellerBadgeAdmin}>
+              <Ionicons name="briefcase-outline" size={16} color="#0284C7" />
+              <Text style={styles.clientSellerAdminText}>
+                Vendedor:{" "}
+                <Text style={{ fontWeight: "bold", color: "#0369A1" }}>
+                  {user.sellerName
+                    ? `[${user.sellerCode || "VEND-XXXX"}] ${user.sellerName}`
+                    : `ID: ${user.sellerId.slice(0, 8)}...`}
                 </Text>
               </Text>
             </View>
@@ -499,6 +552,23 @@ const styles = StyleSheet.create({
   driverPlateAdminText: {
     fontSize: 13,
     color: "#0F294A",
+  },
+  clientSellerBadgeAdmin: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F0F9FF",
+    borderColor: "#BAE6FD",
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  clientSellerAdminText: {
+    fontSize: 13,
+    color: "#0369A1",
   },
   emptyContainer: {
     alignItems: "center",

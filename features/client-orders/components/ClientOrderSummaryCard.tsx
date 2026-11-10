@@ -1,10 +1,11 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useContext } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import InfoRow from "@/components/InfoRow";
 import StatusBadge from "@/components/StatusBadge";
 import CheckRender from "@/components/CheckRender";
 import { ORDER_PREFIX } from "@/constants/UserConstants";
+import { AuthContext } from "@/context/authContext";
 import { ClientOrderDriverCard } from "./ClientOrderDriverCard";
 
 interface ClientOrderSummaryCardProps {
@@ -22,6 +23,11 @@ export const ClientOrderSummaryCard: React.FC<ClientOrderSummaryCardProps> = ({
   onCallDriver,
   onWhatsappDriver,
 }) => {
+  const { user } = useContext(AuthContext);
+  const isSeller = user?.userType === "seller";
+  const clientPhone =
+    selectedOrder.userPhone || userPhone || selectedOrder.phone || selectedOrder.recipientPhone;
+
   const deliveryAddress =
     selectedOrder.deliveryAddress || selectedOrder.deliveries?.[0]?.address;
 
@@ -35,6 +41,54 @@ export const ClientOrderSummaryCard: React.FC<ClientOrderSummaryCardProps> = ({
       <InfoRow icon="shield-checkmark-outline" label="Estado">
         <StatusBadge status={selectedOrder.status} size="small" />
       </InfoRow>
+
+      {Boolean(selectedOrder.userNames) && (
+        <InfoRow
+          icon="person-outline"
+          label="Cliente"
+          value={`${selectedOrder.userNames} ${selectedOrder.userLastNames || ""}`.trim()}
+        />
+      )}
+
+      {/* Botones de Contacto Exclusivos para el Vendedor */}
+      {isSeller && Boolean(clientPhone) && (
+        <View style={styles.sellerContactContainer}>
+          <Text style={styles.sellerContactHeader}>Contactar Cliente:</Text>
+          <View style={styles.sellerContactRow}>
+            <TouchableOpacity
+              style={styles.sellerContactCallBtn}
+              onPress={() => Linking.openURL(`tel:${clientPhone}`)}
+            >
+              <Ionicons name="call" size={15} color="#0284C7" />
+              <Text style={styles.sellerContactCallText}>Llamar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.sellerContactWaBtn}
+              onPress={() => {
+                const clean = String(clientPhone).replace(/[^0-9]/g, "");
+                const wa = clean.startsWith("1") ? clean : `1${clean}`;
+                Linking.openURL(`https://wa.me/${wa}`);
+              }}
+            >
+              <Ionicons name="logo-whatsapp" size={15} color="#16A34A" />
+              <Text style={styles.sellerContactWaText}>WhatsApp</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {Boolean(selectedOrder.paymentMethod) && (
+        <InfoRow
+          icon="card-outline"
+          label="Método de Pago"
+          value={
+            selectedOrder.paymentMethod === "credit"
+              ? "Pago a Crédito"
+              : "Transferencia Bancaria"
+          }
+        />
+      )}
 
         {/* Banner de Orden Rechazada */}
       {selectedOrder.status === "rejected" && (
@@ -286,5 +340,53 @@ const styles = StyleSheet.create({
     color: "#991B1B",
     marginTop: 2,
     lineHeight: 16,
+  },
+  sellerContactContainer: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  sellerContactHeader: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#475569",
+    marginBottom: 6,
+  },
+  sellerContactRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  sellerContactCallBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#E0F2FE",
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  sellerContactCallText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0284C7",
+  },
+  sellerContactWaBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#DCFCE7",
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  sellerContactWaText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#16A34A",
   },
 });

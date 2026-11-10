@@ -9,6 +9,10 @@ export default function ClientOrdersLayout() {
         options={{ title: "Ordenes", headerShown: false }}
       />
       <Stack.Screen
+        name="create-client"
+        options={{ title: "Registrar Cliente", headerShown: false }}
+      />
+      <Stack.Screen
         name="(client)"
         options={{ title: "Ordenes", headerShown: true }}
       />

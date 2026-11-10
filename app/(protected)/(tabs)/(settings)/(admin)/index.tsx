@@ -1,23 +1,21 @@
-import { AuthContext } from "@/context/authContext";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import React, { useContext, useState } from "react";
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-
+import { ScrollView, StyleSheet, Text } from "react-native";
+import { useRouter } from "expo-router";
+import { AuthContext } from "@/context/authContext";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import {
+  SettingsProfileCard,
+  SettingsMenuCard,
+  SettingsMenuRow,
+  SettingsLogoutButton,
+} from "@/components/settings";
 
 const AdminSettingsMainScreen: React.FC = () => {
   const router = useRouter();
-  const { logOut } = useContext(AuthContext);
-
+  const { user, logOut } = useContext(AuthContext);
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+
+  const fullName = `${user?.names || ""} ${user?.lastNames || ""}`.trim() || "Administrador";
 
   const handleLogout = () => {
     setIsLogoutModalVisible(true);
@@ -34,70 +32,75 @@ const AdminSettingsMainScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.topLogoContainer}>
-        <Image
-          source={require("@/assets/images/logo2.png")}
-          style={styles.topLogo}
-          resizeMode="contain"
+      <Text style={styles.headerTitle}>Panel de Administración</Text>
+
+      {/* Perfil del Administrador */}
+      <SettingsProfileCard
+        name={fullName}
+        email={user?.email}
+        phone={user?.phone}
+        badgeText="Administrador del Sistema"
+        badgeIcon="shield-checkmark"
+        badgeColor="#166534"
+        badgeBgColor="#DCFCE7"
+        badgeBorderColor="#BBF7D0"
+        avatarIcon="shield-checkmark"
+      />
+
+      {/* Menú de Gestión y Operaciones */}
+      <SettingsMenuCard title="Gestión y Operaciones">
+        <SettingsMenuRow
+          icon="shield-checkmark-outline"
+          iconColor="#991B1B"
+          iconBgColor="#FEE2E2"
+          title="Verificación de Cédulas"
+          subtitle="Alertas de identidad y validación oficial"
+          onPress={() => router.push("/user-requests")}
         />
-      </View>
+        <SettingsMenuRow
+          icon="people-outline"
+          iconColor="#0284C7"
+          iconBgColor="#E0F2FE"
+          title="Gestión de Usuarios"
+          subtitle="Clientes, vendedores y transportistas"
+          onPress={() => router.push("/user-management")}
+        />
+        <SettingsMenuRow
+          icon="person-add-outline"
+          iconColor="#4338CA"
+          iconBgColor="#E0E7FF"
+          title="Crear Usuario"
+          subtitle="Alta directa de cuentas en el servidor"
+          onPress={() => router.push("/create-user")}
+        />
+        <SettingsMenuRow
+          icon="cube-outline"
+          iconColor="#B45309"
+          iconBgColor="#FEF3C7"
+          title="Gestión de Productos"
+          subtitle="Catálogo, stock y precios oficiales"
+          onPress={() => router.push("/products-screen")}
+        />
+        <SettingsMenuRow
+          icon="bus-outline"
+          iconColor="#0F766E"
+          iconBgColor="#CCFBF1"
+          title="Gestión de Viajes"
+          subtitle="Logística, choferes y despachos"
+          onPress={() => router.push("/trips-screen")}
+        />
+        <SettingsMenuRow
+          icon="card-outline"
+          iconColor="#7E22CE"
+          iconBgColor="#F3E8FF"
+          title="Cuentas Bancarias"
+          subtitle="Cuentas receptoras para transferencias"
+          onPress={() => router.push("/(protected)/(tabs)/(settings)/(admin)/bank-accounts-screen" as any)}
+        />
+      </SettingsMenuCard>
 
-      <Text style={styles.title}>Configuración de Administrador</Text>
-
-      <TouchableOpacity
-        style={[styles.button, styles.primaryAlertButton]}
-        onPress={() => router.push("/user-requests")}
-      >
-        <Ionicons name="shield-checkmark-outline" size={24} color="#fff" />
-        <Text style={styles.buttonText}>Verificación de Cédulas</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/user-management")}
-      >
-        <Ionicons name="person-add-outline" size={24} color="#fff" />
-        <Text style={styles.buttonText}>Gestión de Usuarios</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/products-screen")}
-      >
-        <Ionicons name="cube-outline" size={24} color="#fff" />
-        <Text style={styles.buttonText}>Gestión de Productos</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/trips-screen")}
-      >
-        <Ionicons name="bus-outline" size={24} color="#fff" />
-        <Text style={styles.buttonText}>Gestión de Viajes</Text>
-      </TouchableOpacity>
-
-        <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/create-user")}
-      >
-        <Ionicons name="person-add-outline" size={24} color="#fff" />
-        <Text style={styles.buttonText}>Crear Usuario</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/(protected)/(tabs)/(settings)/(admin)/bank-accounts-screen" as any)}
-      >
-        <Ionicons name="card-outline" size={24} color="#fff" />
-        <Text style={styles.buttonText}>Cuentas Bancarias</Text>
-      </TouchableOpacity>
-
-      <View style={{ marginTop: 30 }}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={22} color="#E31E24" />
-          <Text style={styles.logoutText}>Cerrar sesión</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Cerrar Sesión */}
+      <SettingsLogoutButton onPress={handleLogout} />
 
       <ConfirmationModal
         visible={isLogoutModalVisible}
@@ -120,65 +123,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
   },
   content: {
-    padding: 24,
-    paddingBottom: 100,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 90,
   },
-  topLogoContainer: {
-    alignItems: "center",
-    marginBottom: 8,
-    marginTop: 10,
-  },
-  topLogo: {
-    width: 180,
-    height: 60,
-  },
-  title: {
+  headerTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 24,
-    textAlign: "center",
     color: "#0F294A",
-  },
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#0F294A",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#1E3A8A",
-    marginBottom: 16,
-    shadowColor: "#0F294A",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  primaryAlertButton: {
-    backgroundColor: "#E31E24",
-    borderColor: "#B91C1C",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 15,
-    fontWeight: "700",
-    marginLeft: 12,
-  },
-  logoutButton: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: "#E31E24",
-    borderRadius: 4,
-    paddingVertical: 14,
-    backgroundColor: "#FEF2F2",
-  },
-  logoutText: {
-    color: "#E31E24",
-    fontWeight: "700",
-    fontSize: 16,
+    marginBottom: 14,
   },
 });

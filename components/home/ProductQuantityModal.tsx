@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,9 +11,17 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Palette } from "@/constants/theme";
 import { formatRD } from "@/utils/currencyUtils";
+import { AuthContext } from "@/context/authContext";
+import { CartContext } from "@/context/cartContext";
 import { Product } from "./ProductCatalogCard";
+import { WholesaleQuantitySelector } from "./WholesaleQuantitySelector";
 
-import { TON_OPTIONS as QUANTITY_OPTIONS, getTonOptions } from "@/constants/cartConstants";
+import {
+  TON_OPTIONS as QUANTITY_OPTIONS,
+  getTonOptions,
+  calculateProductSubtotal,
+  getTonsPerBag,
+} from "@/constants/cartConstants";
 export { QUANTITY_OPTIONS };
 
 type ProductQuantityModalProps = {
@@ -30,11 +39,43 @@ export const ProductQuantityModal: React.FC<ProductQuantityModalProps> = ({
   onClose,
   onConfirm,
 }) => {
+  const { user } = useContext(AuthContext);
+  const { assistedClient } = useContext(CartContext);
+  const parsedQty = parseInt(quantity, 10);
+  const currentQtyNum = isNaN(parsedQty) ? 0 : parsedQty;
+
+  const [tabMode, setTabMode] = useState<"standard" | "wholesale">(
+    currentQtyNum > 1000 ? "wholesale" : "standard"
+  );
+
+  useEffect(() => {
+    if (parseInt(quantity, 10) > 1000) {
+      setTabMode("wholesale");
+    }
+  }, [quantity]);
+
   if (!product) return null;
 
-  const currentQtyNum = parseInt(quantity, 10) || 100;
-  const subtotal = product.price * currentQtyNum;
-  const productOptions = getTonOptions(product.name);
+  const isWholesaleAllowed =
+    user?.userType === "admin" ||
+    user?.userType === "seller" ||
+    Boolean(assistedClient);
+
+  const lotSize = product.lotSize || 500;
+  const lotPrice =
+    product.lotPrices?.[String(currentQtyNum)] ||
+    product.lotPrice ||
+    product.price * lotSize;
+  const subtotal = calculateProductSubtotal(
+    currentQtyNum,
+    product.price,
+    lotSize,
+    lotPrice,
+    product.lotPrices
+  );
+  const productOptions = getTonOptions(product.name, product.weightKg, product.unit);
+  const tonsPerBag = getTonsPerBag(product.name, product.weightKg);
+  const isMultipleOf50 = currentQtyNum > 0 && currentQtyNum % 50 === 0;
 
   return (
     <Modal
@@ -51,34 +92,91 @@ export const ProductQuantityModal: React.FC<ProductQuantityModalProps> = ({
 
           <Text style={styles.modalTitle}>Seleccionar Cantidad</Text>
           <Text style={styles.modalProductName}>{product.name}</Text>
-          <Text style={styles.modalProductPrice}>{formatRD(product.price)} c/u</Text>
 
-          <Text style={styles.optionsSectionTitle}>Cantidad / Toneladas:</Text>
-
-          <View style={styles.optionsGrid}>
-            {productOptions.map((opt) => {
-              const isSelected = parseInt(quantity, 10) === opt.fundas;
-              return (
-                <TouchableOpacity
-                  key={opt.fundas}
+          {isWholesaleAllowed && (
+            <View style={styles.tabContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.tabButton,
+                  tabMode === "standard" && styles.tabButtonActive,
+                ]}
+                onPress={() => {
+                  setTabMode("standard");
+                  if (currentQtyNum > 1000) setQuantity("500");
+                }}
+              >
+                <Text
                   style={[
-                    styles.fixedOptionChip,
-                    isSelected && styles.fixedOptionChipSelected,
+                    styles.tabButtonText,
+                    tabMode === "standard" && styles.tabButtonTextActive,
                   ]}
-                  onPress={() => setQuantity(String(opt.fundas))}
                 >
-                  <Text
-                    style={[
-                      styles.fixedOptionText,
-                      isSelected && styles.fixedOptionTextSelected,
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+                  Estándar (≤ 1,000)
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.tabButton,
+                  tabMode === "wholesale" && styles.tabButtonActive,
+                ]}
+                onPress={() => {
+                  setTabMode("wholesale");
+                  if (currentQtyNum <= 1000) setQuantity("1500");
+                }}
+              >
+                <Text
+                  style={[
+                    styles.tabButtonText,
+                    tabMode === "wholesale" && styles.tabButtonTextActive,
+                  ]}
+                >
+                  Mayorista (+1,000)
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {tabMode === "wholesale" && isWholesaleAllowed ? (
+            <WholesaleQuantitySelector
+              quantity={currentQtyNum}
+              onChangeQuantity={(qty) => setQuantity(String(qty))}
+              tonsPerBag={tonsPerBag}
+              unit={product.unit || "fundas"}
+            />
+          ) : (
+            <>
+              <Text style={styles.optionsSectionTitle}>Cantidad / Toneladas:</Text>
+              <ScrollView
+                style={{ width: "100%", maxHeight: 210, marginBottom: 18 }}
+                showsVerticalScrollIndicator={true}
+              >
+                <View style={styles.optionsGrid}>
+                  {productOptions.map((opt) => {
+                    const isSelected = parseInt(quantity, 10) === opt.fundas;
+                    return (
+                      <TouchableOpacity
+                        key={opt.fundas}
+                        style={[
+                          styles.fixedOptionChip,
+                          isSelected && styles.fixedOptionChipSelected,
+                        ]}
+                        onPress={() => setQuantity(String(opt.fundas))}
+                      >
+                        <Text
+                          style={[
+                            styles.fixedOptionText,
+                            isSelected && styles.fixedOptionTextSelected,
+                          ]}
+                        >
+                          {opt.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </>
+          )}
 
           <Text style={styles.subtotalText}>
             Subtotal:{" "}
@@ -87,7 +185,14 @@ export const ProductQuantityModal: React.FC<ProductQuantityModalProps> = ({
             </Text>
           </Text>
 
-          <TouchableOpacity style={styles.confirmAddBtn} onPress={onConfirm}>
+          <TouchableOpacity
+            style={[
+              styles.confirmAddBtn,
+              !isMultipleOf50 && { opacity: 0.5 },
+            ]}
+            disabled={!isMultipleOf50}
+            onPress={onConfirm}
+          >
             <Ionicons
               name="cart-sharp"
               size={18}
@@ -142,6 +247,37 @@ const styles = StyleSheet.create({
     color: "#334155",
     textAlign: "center",
     marginBottom: 2,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#F1F5F9",
+    borderRadius: 8,
+    padding: 3,
+    width: "100%",
+    marginVertical: 12,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  tabButtonActive: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  tabButtonTextActive: {
+    color: Palette.primaryDark,
+    fontWeight: "700",
   },
   modalProductPrice: {
     fontSize: 14,

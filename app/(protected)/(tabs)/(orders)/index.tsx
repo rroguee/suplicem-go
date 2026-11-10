@@ -7,6 +7,7 @@ import { useContext } from "react";
 import AdminOrdersMainScreen from "./(admin)";
 import ClientOrdersMainScreen from "./(client)";
 import DriverOrdersMainScreen from "./(driver)";
+import { SellerClientsScreen } from "@/features/seller/screens/SellerClientsScreen";
 
 const OrdersScreen: React.FC = () => {
   const authContext = useContext(AuthContext);
@@ -23,6 +24,10 @@ const OrdersScreen: React.FC = () => {
 
       <CheckRender allowed={authContext?.user?.userType === ROLE.DRIVER}>
         <DriverOrdersMainScreen />
+      </CheckRender>
+
+      <CheckRender allowed={authContext?.user?.userType === ROLE.SELLER}>
+        <SellerClientsScreen />
       </CheckRender>
     </View>
   );

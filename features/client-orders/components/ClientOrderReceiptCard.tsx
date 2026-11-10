@@ -14,18 +14,23 @@ import { Ionicons } from "@expo/vector-icons";
 import { pickAndCompressImage } from "@/utils/imageUtils";
 import { updateOrderReceipt } from "@/services/orderService";
 import { ReceiptViewerModal } from "../../admin-orders/components/ReceiptViewerModal";
+import { ActionSuccessModal } from "@/components/common/ActionSuccessModal";
 
 interface ClientOrderReceiptCardProps {
   order: any;
   onReceiptUpdated?: (newReceiptUrl: string) => void;
+  canUploadReceipt?: boolean;
 }
 
 export const ClientOrderReceiptCard: React.FC<ClientOrderReceiptCardProps> = ({
   order,
   onReceiptUpdated,
+  canUploadReceipt = true,
 }) => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [savedUrl, setSavedUrl] = useState("");
 
   const receiptUrl = order?.receiptImage;
 
@@ -74,10 +79,8 @@ export const ClientOrderReceiptCard: React.FC<ClientOrderReceiptCardProps> = ({
 
       if (res?.success) {
         const updatedUrl = res.receiptImage || pickResult.uri;
-        Alert.alert("Éxito", "El comprobante de pago ha sido actualizado correctamente.");
-        if (onReceiptUpdated) {
-          onReceiptUpdated(updatedUrl);
-        }
+        setSavedUrl(updatedUrl);
+        setShowSuccessModal(true);
       } else {
         Alert.alert("Error", res?.message || "No se pudo actualizar el comprobante.");
       }
@@ -126,44 +129,68 @@ export const ClientOrderReceiptCard: React.FC<ClientOrderReceiptCardProps> = ({
         </View>
       )}
 
-      {/* Botón de acción (Adjuntar o Cambiar) */}
-      <View style={styles.actionRow}>
-        <TouchableOpacity
-          style={[styles.button, receiptUrl ? styles.buttonOutline : styles.buttonPrimary]}
-          onPress={handleSelectImageSource}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          {loading ? (
-            <ActivityIndicator
-              size="small"
-              color={receiptUrl ? "#0F294A" : "#FFFFFF"}
-            />
-          ) : (
-            <>
-              <Ionicons
-                name={receiptUrl ? "sync-outline" : "cloud-upload-outline"}
-                size={18}
+      {/* Botón de acción (Solo para clientes/administradores autorizados) */}
+      {canUploadReceipt && (
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={[styles.button, receiptUrl ? styles.buttonOutline : styles.buttonPrimary]}
+            onPress={handleSelectImageSource}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <ActivityIndicator
+                size="small"
                 color={receiptUrl ? "#0F294A" : "#FFFFFF"}
               />
-              <Text
-                style={[
-                  styles.buttonText,
-                  receiptUrl ? styles.buttonTextOutline : styles.buttonTextPrimary,
-                ]}
-              >
-                {receiptUrl ? "Cambiar comprobante" : "Adjuntar comprobante"}
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+            ) : (
+              <>
+                <Ionicons
+                  name={receiptUrl ? "sync-outline" : "cloud-upload-outline"}
+                  size={18}
+                  color={receiptUrl ? "#0F294A" : "#FFFFFF"}
+                />
+                <Text
+                  style={[
+                    styles.buttonText,
+                    receiptUrl ? styles.buttonTextOutline : styles.buttonTextPrimary,
+                  ]}
+                >
+                  {receiptUrl ? "Cambiar comprobante" : "Adjuntar comprobante"}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {!canUploadReceipt && !receiptUrl && order?.paymentMethod !== "credit" && (
+        <View style={styles.readOnlyNotice}>
+          <Ionicons name="information-circle-outline" size={16} color="#64748B" />
+          <Text style={styles.readOnlyNoticeText}>
+            El cliente aún no ha subido el comprobante de transferencia.
+          </Text>
+        </View>
+      )}
 
       {/* Viewer Modal */}
       <ReceiptViewerModal
         visible={modalVisible}
         imageUrl={receiptUrl}
         onClose={() => setModalVisible(false)}
+      />
+
+      {/* Confirmation Success Modal */}
+      <ActionSuccessModal
+        visible={showSuccessModal}
+        title="¡Comprobante Actualizado!"
+        message="El comprobante de pago ha sido subido y actualizado correctamente."
+        onClose={() => {
+          setShowSuccessModal(false);
+          if (onReceiptUpdated && savedUrl) {
+            onReceiptUpdated(savedUrl);
+          }
+        }}
       />
     </View>
   );
@@ -269,5 +296,22 @@ const styles = StyleSheet.create({
   },
   buttonTextOutline: {
     color: "#0F294A",
+  },
+  readOnlyNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F8FAFC",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginTop: 4,
+  },
+  readOnlyNoticeText: {
+    fontSize: 12,
+    color: "#64748B",
+    flex: 1,
   },
 });

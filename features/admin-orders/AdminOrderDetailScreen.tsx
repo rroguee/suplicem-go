@@ -12,6 +12,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { Trip } from "@/types/trips";
 import { DriverSelectionModal } from "./components/DriverSelectionModal";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -41,6 +42,7 @@ export interface AdminOrderDetailScreenProps {
 export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
   orderId,
 }) => {
+  const router = useRouter();
   const {
     currentOrder,
     trip,
@@ -109,14 +111,11 @@ export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
   };
 
   const handleApprovePress = () => {
-    const totalTons = Number(currentOrder?.totalTons || currentOrder?.pendingBalance) || 0;
-    if (totalTons > 25 && isDelivery) {
-      setIsApprovalPlanning(true);
-      setTripToSplitDirectly(null);
-      setPlannerModalVisible(true);
-    } else {
-      approveOrder();
-    }
+    if (!currentOrder?.id) return;
+    router.push({
+      pathname: "/order-approval",
+      params: { orderId: currentOrder.id },
+    } as any);
   };
 
   const handleConfirmPlan = async (plannedTrips: PlannedTripItem[]) => {

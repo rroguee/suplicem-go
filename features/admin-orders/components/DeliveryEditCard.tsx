@@ -2,50 +2,53 @@ import React from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import CustomPickerModal from "@/components/CustomPickerModal";
-import { Address, User } from "@/types/users";
+import { Address } from "@/types/users";
 import { DeliveryDetail } from "@/types/orders";
 
 interface DeliveryEditCardProps {
   delivery: any;
   index: number;
-  users: User[];
+  clientName: string;
   productOptions: { label: string; value: string }[];
-  maxQuantity: number;
-  onUserSelection: (userId: string, deliveryId: string) => void;
   onUpdateDelivery: (id: string, values: Partial<DeliveryDetail>) => void;
   onRemoveDelivery?: (id: string) => void;
-  onValidateQuantity: (newQuantity: number) => boolean;
+  canRemove?: boolean;
 }
 
 export const DeliveryEditCard: React.FC<DeliveryEditCardProps> = ({
   delivery,
   index,
-  users,
+  clientName,
   productOptions,
-  maxQuantity,
-  onUserSelection,
   onUpdateDelivery,
   onRemoveDelivery,
-  onValidateQuantity,
+  canRemove = false,
 }) => {
   return (
     <View style={styles.deliveryCard}>
-      <Text style={styles.deliveryCardTitle}>Entrega #{index + 1}</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.deliveryCardTitle}>Entrega #{index + 1}</Text>
+        {canRemove && onRemoveDelivery && (
+          <TouchableOpacity
+            onPress={() => onRemoveDelivery(delivery.id)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="trash-outline" size={18} color="#EF4444" />
+          </TouchableOpacity>
+        )}
+      </View>
 
-      {/* Selector de Usuario */}
+      {/* Usuario Destinatario (Fijo al cliente de la orden) */}
       <Text style={styles.deliveryEditLabel}>Usuario Destinatario</Text>
-      <CustomPickerModal
-        label="Seleccionar usuario"
-        selectedValue={delivery.address?.userUid ?? ""}
-        onValueChange={(value) => onUserSelection(value, delivery.id)}
-        options={[
-          { label: "Seleccionar usuario", value: "" },
-          ...users.map((user) => ({
-            label: `${user.names} ${user.lastNames}`,
-            value: user.uid || "",
-          })),
-        ]}
-      />
+      <View style={styles.readOnlyUserBox}>
+        <Ionicons name="person-circle-outline" size={20} color="#0F294A" />
+        <Text style={styles.readOnlyUserName} numberOfLines={1}>
+          {clientName || "Cliente de la orden"}
+        </Text>
+        <View style={styles.fixedBadge}>
+          <Text style={styles.fixedBadgeText}>Cliente</Text>
+        </View>
+      </View>
 
       {/* Selector de Dirección */}
       <Text style={styles.deliveryEditLabel}>Dirección de Entrega</Text>
@@ -83,44 +86,72 @@ export const DeliveryEditCard: React.FC<DeliveryEditCardProps> = ({
         options={[{ label: "Seleccionar", value: "" }, ...productOptions]}
       />
 
-      {/* Selector de Cantidad */}
+      {/* Selector de Cantidad con botones rápidos (-50, +50, +500) como en Orden Asistida */}
       <Text style={styles.deliveryEditLabel}>
         Cantidad ({delivery.unit || "fundas"})
       </Text>
-      <CustomPickerModal
-        label="Seleccionar cantidad"
-        selectedValue={String(delivery.quantity || 0)}
-        onValueChange={(val) => {
-          const num = Number(val) || 0;
-          if (onValidateQuantity(num)) {
-            onUpdateDelivery(delivery.id, { quantity: num });
-          }
-        }}
-        options={(() => {
-          const standardSteps = [100, 200, 300, 400, 500, 600, 1000];
-          // Opciones que no superen el máximo disponible
-          const validSteps = standardSteps.filter((q) => q <= maxQuantity);
-          
-          // Si el máximo no está en los pasos estándar (ej. 150), lo agregamos
-          if (maxQuantity > 0 && !validSteps.includes(maxQuantity)) {
-            validSteps.push(maxQuantity);
-            validSteps.sort((a, b) => a - b);
-          }
-          if (validSteps.length === 0) {
-            return [
-              { label: `Sin cantidad disponible (Máx: ${maxQuantity})`, value: "0" },
-            ];
-          }
-          return [
-            { label: "Seleccionar cantidad", value: "0" },
-            ...validSteps.map((q) => ({
-              label: `${q} ${delivery.unit || "fundas"}${q === maxQuantity ? " (Total disponible)" : ""}`,
-              value: String(q),
-            })),
-          ];
-        })()}
-      />
+      <View style={styles.quantityContainer}>
+        <View style={styles.quantityInputWrapper}>
+          <TextInput
+            style={styles.quantityInput}
+            keyboardType="numeric"
+            value={
+              delivery.quantity !== undefined &&
+              delivery.quantity !== null &&
+              delivery.quantity > 0
+                ? String(delivery.quantity)
+                : ""
+            }
+            placeholder="0"
+            placeholderTextColor="#94A3B8"
+            onChangeText={(text) => {
+              const cleaned = text.replace(/[^0-9]/g, "");
+              const num = parseInt(cleaned, 10) || 0;
+              onUpdateDelivery(delivery.id, { quantity: num });
+            }}
+          />
+          <Text style={styles.unitSuffix}>{delivery.unit || "fundas"}</Text>
+        </View>
 
+        <View style={styles.stepButtonsRow}>
+          <TouchableOpacity
+            style={styles.stepBtn}
+            activeOpacity={0.7}
+            onPress={() => {
+              const current = Number(delivery.quantity) || 0;
+              onUpdateDelivery(delivery.id, {
+                quantity: Math.max(0, current - 50),
+              });
+            }}
+          >
+            <Text style={styles.stepBtnText}>-50</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.stepBtn}
+            activeOpacity={0.7}
+            onPress={() => {
+              const current = Number(delivery.quantity) || 0;
+              onUpdateDelivery(delivery.id, { quantity: current + 50 });
+            }}
+          >
+            <Text style={styles.stepBtnText}>+50</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.stepBtn, styles.stepBtnLot]}
+            activeOpacity={0.7}
+            onPress={() => {
+              const current = Number(delivery.quantity) || 0;
+              onUpdateDelivery(delivery.id, { quantity: current + 500 });
+            }}
+          >
+            <Text style={[styles.stepBtnText, styles.stepBtnLotText]}>
+              +500 Lote
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 };
@@ -134,11 +165,16 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     marginBottom: 12,
   },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
   deliveryCardTitle: {
     fontSize: 15,
     fontWeight: "bold",
     color: "#0F294A",
-    marginBottom: 8,
   },
   deliveryEditLabel: {
     fontSize: 13,
@@ -147,29 +183,83 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 4,
   },
-  input: {
-    height: 46,
-    borderColor: "#CBD5E1",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#F8FAFC",
-    fontSize: 15,
-    color: "#1E293B",
-  },
-  removeDeliveryButton: {
+  readOnlyUserBox: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: "#EF4444",
-    paddingVertical: 10,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
     borderRadius: 8,
-    marginTop: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
   },
-  removeDeliveryText: {
-    color: "#fff",
-    fontWeight: "600",
+  readOnlyUserName: {
+    flex: 1,
     fontSize: 14,
+    fontWeight: "600",
+    color: "#0F294A",
+  },
+  fixedBadge: {
+    backgroundColor: "#E2E8F0",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  fixedBadgeText: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: "#475569",
+  },
+  quantityContainer: {
+    gap: 8,
+  },
+  quantityInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 8,
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 12,
+  },
+  quantityInput: {
+    flex: 1,
+    height: 44,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F294A",
+  },
+  unitSuffix: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#64748B",
+    marginLeft: 6,
+  },
+  stepButtonsRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  stepBtn: {
+    flex: 1,
+    paddingVertical: 9,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#334155",
+  },
+  stepBtnLot: {
+    backgroundColor: "#FFF7ED",
+    borderColor: "#FDBA74",
+  },
+  stepBtnLotText: {
+    color: "#C2410C",
   },
 });

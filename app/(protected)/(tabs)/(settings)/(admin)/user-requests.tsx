@@ -157,7 +157,7 @@ const UserRequestsScreen: React.FC = () => {
                     👤 {user.names} {user.lastNames}
                   </Text>
                   <Text style={styles.userRole}>
-                    Rol: <Text style={{ fontWeight: "bold" }}>{user.userType === "client" ? "Cliente" : user.userType === "driver" ? "Conductor" : "Admin"}</Text>
+                    Rol: <Text style={{ fontWeight: "bold" }}>{user.userType === "client" ? "Cliente" : user.userType === "driver" ? "Conductor" : user.userType === "seller" ? "Vendedor" : "Admin"}</Text>
                   </Text>
                   <Text style={styles.userDetailHighlight}>
                     🪪 {user.identificationType}: {user.identification}

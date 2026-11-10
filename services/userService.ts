@@ -197,3 +197,32 @@ export const updateClientProfile = async (
     throw error;
   }
 };
+
+export const updateUserAddresses = async (uid: string, addresses: Address[]) => {
+  try {
+    const response = await protectedApi.patch("/users/update", {
+      uid,
+      addresses,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al actualizar direcciones del usuario:", error);
+    throw error;
+  }
+};
+
+export const assignSellerToClient = async (
+  clientId: string,
+  sellerId: string | null
+) => {
+  try {
+    const response = await protectedApi.patch("/users/update", {
+      uid: clientId,
+      sellerId: sellerId || null,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al asignar vendedor al cliente:", error);
+    throw error;
+  }
+};

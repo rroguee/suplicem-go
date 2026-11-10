@@ -10,18 +10,23 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import AddressPicker from "@/components/AddressPicker";
 import CustomPickerModal from "@/components/CustomPickerModal";
+import { ActionSuccessModal } from "@/components/common/ActionSuccessModal";
+import { ScreenHeader } from "@/components/ScreenHeader";
 import { AdminUserVehicleFields } from "../components/AdminUserVehicleFields";
 import { useAdminCreateUser } from "../hooks/useAdminCreateUser";
 
 const ROLE_OPTIONS = [
   { label: "Cliente", value: "client" },
+  { label: "Vendedor", value: "seller" },
   { label: "Conductor / Transportista", value: "driver" },
   { label: "Administrador", value: "admin" },
 ];
 
 export const AdminCreateUserScreen: React.FC = () => {
+  const router = useRouter();
   const {
     names,
     setNames,
@@ -43,6 +48,11 @@ export const AdminCreateUserScreen: React.FC = () => {
     vehicle,
     updateVehicle,
     handleCreateUser,
+    isSeller,
+    showSuccessModal,
+    setShowSuccessModal,
+    successMessage,
+    resetForm,
   } = useAdminCreateUser();
 
   return (
@@ -57,16 +67,31 @@ export const AdminCreateUserScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-      <Text style={styles.title}>Crear Nueva Cuenta de Usuario</Text>
-
-      <CustomPickerModal
-        label="Rol de Usuario a Crear"
-        selectedValue={userType}
-        onValueChange={(val) => setUserType(val as any)}
-        options={ROLE_OPTIONS}
+      <ScreenHeader
+        title={isSeller ? "Registrar Cliente" : "Crear Usuario"}
+        showBack={true}
+        onBack={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else if (isSeller) {
+            router.replace("/(protected)/(tabs)/(orders)");
+          } else {
+            router.replace("/(protected)/(tabs)/(settings)");
+          }
+        }}
+        style={{ marginBottom: 16 }}
       />
 
-      {userType === "admin" && (
+      {!isSeller && (
+        <CustomPickerModal
+          label="Rol de Usuario a Crear"
+          selectedValue={userType}
+          onValueChange={(val) => setUserType(val as any)}
+          options={ROLE_OPTIONS}
+        />
+      )}
+
+      {!isSeller && userType === "admin" && (
         <View style={styles.adminNotice}>
           <Ionicons name="shield-checkmark" size={20} color="#D97706" />
           <Text style={styles.adminNoticeText}>
@@ -165,10 +190,24 @@ export const AdminCreateUserScreen: React.FC = () => {
             ? "Crear Conductor en Servidor"
             : userType === "admin"
             ? "Crear Administrador en Servidor"
+            : userType === "seller"
+            ? "Crear Vendedor en Servidor"
             : "Crear Cliente en Servidor"}
         </Text>
       </TouchableOpacity>
       </ScrollView>
+
+      {/* Tarjeta Modal de Confirmación de Éxito Reutilizable */}
+      <ActionSuccessModal
+        visible={showSuccessModal}
+        title={isSeller ? "¡Cliente Registrado!" : "¡Usuario Registrado!"}
+        message={successMessage}
+        onClose={() => {
+          setShowSuccessModal(false);
+          resetForm();
+          router.back();
+        }}
+      />
     </KeyboardAvoidingView>
   );
 };

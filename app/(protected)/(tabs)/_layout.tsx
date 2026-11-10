@@ -33,23 +33,42 @@ export default function TabLayout() {
       <Tabs.Screen
         name="(home)"
         options={{
+          popToTopOnBlur: true,
           title:
             authContext?.user?.userType === ROLE.DRIVER
               ? "Disponibles"
+              : authContext?.user?.userType === ROLE.SELLER
+              ? "Ventas"
               : "Home",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+            <Ionicons
+              size={26}
+              name={
+                authContext?.user?.userType === ROLE.SELLER
+                  ? "cart-outline"
+                  : "home-outline"
+              }
+              color={color}
+            />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate("(home)", { screen: "index" });
+          },
+        })}
       />
       <Tabs.Screen
         name="(orders)"
         options={{
+          popToTopOnBlur: true,
           title:
             authContext?.user?.userType === ROLE.DRIVER
               ? "Historial"
               : authContext?.user?.userType === ROLE.ADMIN
               ? "Verificaciones"
+              : authContext?.user?.userType === ROLE.SELLER
+              ? "Mis Clientes"
               : "Ordenes",
           tabBarIcon: ({ color }) => (
             <Ionicons
@@ -58,6 +77,8 @@ export default function TabLayout() {
                   ? "shield-checkmark-outline"
                   : authContext?.user?.userType === ROLE.DRIVER
                   ? "time-outline"
+                  : authContext?.user?.userType === ROLE.SELLER
+                  ? "people-outline"
                   : "paper-plane"
               }
               size={28}
@@ -65,6 +86,11 @@ export default function TabLayout() {
             />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate("(orders)", { screen: "index" });
+          },
+        })}
       />
       <Tabs.Screen
         name="(settings)"
@@ -72,11 +98,19 @@ export default function TabLayout() {
           title:
             authContext?.user?.userType === ROLE.DRIVER
               ? "Cuenta"
+              : authContext?.user?.userType === ROLE.SELLER
+              ? "Ajustes"
               : "Configuración",
+          popToTopOnBlur: true,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="settings" size={28} color={color} />
+            <Ionicons name="settings-outline" size={26} color={color} />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate("(settings)", { screen: "index" });
+          },
+        })}
       />
     </Tabs>
   );

@@ -27,8 +27,12 @@ export type User = {
   names: string;
   lastNames: string;
   phone: string;
-  userType: "client" | "driver" | "admin";
+  userType: "client" | "driver" | "admin" | "seller";
   driverCode?: string;
+  sellerCode?: string;
+  sellerId?: string;
+  sellerName?: string;
+  sellerPhone?: string;
   addresses?: Address[];
   vehicle?: VehicleData;
   status?: string;

@@ -20,6 +20,8 @@ export const AdminUserHeaderCard: React.FC<AdminUserHeaderCardProps> = ({ user }
         return "Conductor";
       case "client":
         return "Cliente";
+      case "seller":
+        return "Vendedor";
       case "admin":
         return "Administrador";
       default:

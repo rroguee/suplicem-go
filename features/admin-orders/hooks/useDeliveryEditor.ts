@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useAlert } from "@/context/alertContext";
 import { useLoading } from "@/context/loadingContext";
 import { updateOrderDeliveries } from "@/services/orderService";
+import { updateUserAddresses } from "@/services/userService";
 import { Address, User } from "@/types/users";
 import { Order, DeliveryDetail as OrderDelivery } from "@/types/orders";
 import { useNewDeliveryAddress } from "./useNewDeliveryAddress";
+import { redistributeEquitably } from "../utils/deliveryDistributionUtils";
 
 const generateTempDeliveryId = () => Math.random().toString(36).substring(2, 9);
 
@@ -37,6 +39,16 @@ export const useDeliveryEditor = (
         ...createdAddress,
         userUid: targetUserUid,
       };
+
+      if (createdAddress.saveToProfile !== false && targetUserUid) {
+        const clientUser = users.find((u) => u.uid === targetUserUid);
+        const existingClientAddrs = clientUser?.addresses || order?.clientAddresses || [];
+        const addrExists = existingClientAddrs.some((a) => a.placeId === newAddress.placeId);
+        const updatedClientAddrs = addrExists ? existingClientAddrs : [...existingClientAddrs, newAddress];
+        updateUserAddresses(targetUserUid, updatedClientAddrs).catch((err) => {
+          console.error("Error al guardar dirección en el perfil del cliente:", err);
+        });
+      }
 
       setEditedDeliveries((prev) => {
         if (prev.length === 0) {
@@ -202,18 +214,11 @@ export const useDeliveryEditor = (
     }
   };
 
-      const addDelivery = () => {
+  const addDelivery = () => {
     if (!order) return;
 
-    // 1. Buscar el primer producto que aún tenga balance pendiente por asignar
-    const productWithBalance = (order.items || []).find((item) => {
-      const allocated = editedDeliveries.reduce((sum, d) => {
-        return d.productId === item.productId ? sum + (Number(d.quantity) || 0) : sum;
-      }, 0);
-      return (Number(item.quantity) || 0) - allocated > 0;
-    });
-
-    const defaultProduct = productWithBalance || order.items?.[0];
+    // 1. Buscar el primer producto que tenga la orden
+    const defaultProduct = order.items?.[0];
     const defaultProductId = defaultProduct?.productId || "";
     const defaultUnit = defaultProduct?.unit || "fundas";
 
@@ -240,12 +245,16 @@ export const useDeliveryEditor = (
         ...defaultAddress,
         userUid: order.userId || "",
       },
+      availableAddresses: clientSavedAddresses,
       quantity: 0,
       unit: defaultUnit,
       delivered: false,
     };
 
-    setEditedDeliveries((prev) => [...prev, newDelivery]);
+    setEditedDeliveries((prev) => {
+      const nextDeliveries = [...prev, newDelivery];
+      return redistributeEquitably(nextDeliveries, order);
+    });
   };
   
   const updateDelivery = (id: string, values: Partial<OrderDelivery>) => {
@@ -262,7 +271,10 @@ export const useDeliveryEditor = (
       });
       return;
     }
-    setEditedDeliveries((prev) => prev.filter((del) => del.id !== id));
+    setEditedDeliveries((prev) => {
+      const nextDeliveries = prev.filter((del) => del.id !== id);
+      return redistributeEquitably(nextDeliveries, order);
+    });
   };
 
   const handleUserSelection = (userId: string, deliveryId: string) => {

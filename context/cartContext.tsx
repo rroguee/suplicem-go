@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
 import { useAlert } from "./alertContext";
 import { AuthContext } from "./authContext";
+import { User } from "@/types/users";
 
 export type Product = {
   id: string;
@@ -22,6 +23,8 @@ type CartState = {
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
   setCartItems: (items: Product[], type?: DeliveryType) => void;
+  assistedClient: User | null;
+  setAssistedClient: (client: User | null) => void;
 };
 
 const getCartStorageKey = (uid?: string) => (uid ? `cart-key-${uid}` : "cart-key-guest");
@@ -35,12 +38,15 @@ export const CartContext = createContext<CartState>({
   removeFromCart: () => {},
   clearCart: () => {},
   setCartItems: () => {},
+  assistedClient: null,
+  setAssistedClient: () => {},
 });
 
 export const CartProvider = ({ children }: PropsWithChildren) => {
   const { user } = useContext(AuthContext);
   const [cart, setCart] = useState<Product[]>([]);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("domicilio");
+  const [assistedClient, setAssistedClient] = useState<User | null>(null);
 
   const { showAlert } = useAlert();
 
@@ -150,9 +156,13 @@ export const CartProvider = ({ children }: PropsWithChildren) => {
         removeFromCart,
         clearCart,
         setCartItems,
+        assistedClient,
+        setAssistedClient,
       }}
     >
       {children}
     </CartContext.Provider>
   );
 };
+
+export const useCart = () => useContext(CartContext);

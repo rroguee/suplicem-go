@@ -2,7 +2,7 @@ import { Address, VehicleData } from "@/types/users";
 import { clearAuthSession } from "@/utils/authStorage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SplashScreen, useRouter } from "expo-router";
-import { createContext, PropsWithChildren, useEffect, useState } from "react";
+import { createContext, useContext, PropsWithChildren, useEffect, useState } from "react";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -14,9 +14,13 @@ type User = {
   names: string;
   lastNames: string;
   phone: string;
-  userType: "client" | "driver";
+  userType: "client" | "driver" | "admin" | "seller";
+  driverCode?: string;
+  sellerCode?: string;
+  sellerId?: string;
   addresses: Address[];
   vehicle?: VehicleData;
+  status?: string;
 };
 
 type AuthState = {
@@ -125,3 +129,5 @@ export function AuthProvider({ children }: PropsWithChildren) {
     </AuthContext.Provider>
   );
 }
+
+export const useAuth = () => useContext(AuthContext);

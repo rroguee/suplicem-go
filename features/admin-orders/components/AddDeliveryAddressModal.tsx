@@ -10,6 +10,7 @@ import {
   Platform,
   StyleSheet,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import AddressPicker from "@/components/AddressPicker";
 import CustomPickerModal from "@/components/CustomPickerModal";
 
@@ -24,6 +25,7 @@ interface AddDeliveryAddressModalProps {
     recipientDocument: string;
     recipientDocumentType: string;
     additionalInfo: string;
+    saveToProfile?: boolean;
   };
   setNewAddressData: React.Dispatch<React.SetStateAction<any>>;
   documentTypeOptions: { label: string; value: string }[];
@@ -103,48 +105,26 @@ export const AddDeliveryAddressModal: React.FC<AddDeliveryAddressModalProps> = (
               }
             />
 
-            <Text style={styles.label}>Tipo de documento</Text>
-            <CustomPickerModal
-              label="Seleccionar tipo de documento"
-              selectedValue={newAddressData.recipientDocumentType}
-              onValueChange={(value) =>
+            {/* Opción para guardar dirección para futuros pedidos */}
+            <TouchableOpacity
+              style={styles.saveProfileOption}
+              activeOpacity={0.8}
+              onPress={() =>
                 setNewAddressData((prev: any) => ({
                   ...prev,
-                  recipientDocumentType: value,
+                  saveToProfile: prev.saveToProfile === false ? true : false,
                 }))
               }
-              options={documentTypeOptions}
-            />
-
-            <Text style={styles.label}>Número de documento</Text>
-            <TextInput
-              style={styles.input}
-              maxLength={
-                (newAddressData.recipientDocumentType || "").toLowerCase().includes("cedul") ? 11 : 12
-              }
-              keyboardType={
-                (newAddressData.recipientDocumentType || "").toLowerCase().includes("cedul")
-                  ? "numeric"
-                  : "default"
-              }
-              placeholder={
-                (newAddressData.recipientDocumentType || "").toLowerCase().includes("cedul")
-                  ? "Número de Cédula (11 dígitos)"
-                  : "Número de Pasaporte (6-12 caracteres)"
-              }
-              placeholderTextColor="#999"
-              value={newAddressData.recipientDocument}
-              onChangeText={(text) => {
-                const isCedula = (newAddressData.recipientDocumentType || "").toLowerCase().includes("cedul");
-                const validatedText = isCedula
-                  ? text.replace(/[^0-9]/g, "")
-                  : text;
-                setNewAddressData((prev: any) => ({
-                  ...prev,
-                  recipientDocument: validatedText,
-                }));
-              }}
-            />
+            >
+              <Ionicons
+                name={newAddressData.saveToProfile !== false ? "checkbox" : "square-outline"}
+                size={22}
+                color={newAddressData.saveToProfile !== false ? "#0F294A" : "#64748B"}
+              />
+              <Text style={styles.saveProfileOptionText}>
+                Guardar esta dirección en el perfil del cliente para futuros pedidos
+              </Text>
+            </TouchableOpacity>
 
             <View style={styles.modalButtonsContainer}>
               <TouchableOpacity
@@ -168,6 +148,20 @@ export const AddDeliveryAddressModal: React.FC<AddDeliveryAddressModalProps> = (
 };
 
 const styles = StyleSheet.create({
+  saveProfileOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 14,
+    marginBottom: 6,
+    paddingVertical: 4,
+  },
+  saveProfileOptionText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#334155",
+    fontWeight: "600",
+  },
   modalOverlay: {
     flexGrow: 1,
     justifyContent: "center",

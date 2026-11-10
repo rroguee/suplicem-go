@@ -42,17 +42,22 @@ const CartScreen: React.FC = () => {
     updateProductInCart,
     deliveryType,
     updateDeliveryType,
+    assistedClient,
+    setAssistedClient,
   } = useContext(CartContext);
   const { user, updateUser } = useContext(AuthContext);
   const { show, hide } = useLoading();
   const router = useRouter();
   const { showAlert } = useAlert();
 
+  const targetUser = assistedClient || user;
+  const hasAssignedSeller = Boolean(assistedClient ? assistedClient.sellerId : user?.sellerId);
+
   const [reference, setReference] = useState("");
 
   // Dirección seleccionada para despacho
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(
-    user?.addresses && user.addresses.length > 0 ? user.addresses[0] : null
+    targetUser?.addresses && targetUser.addresses.length > 0 ? targetUser.addresses[0] : null
   );
   const [customAddressText, setCustomAddressText] = useState("");
   const [customAdditionalInfo, setCustomAdditionalInfo] = useState("");
@@ -125,8 +130,8 @@ const CartScreen: React.FC = () => {
       fetchAccounts();
 
       // Preseleccionar dirección registrada por defecto si está disponible y no se ha elegido ninguna
-      if (user?.addresses && user.addresses.length > 0) {
-        setSelectedAddress((current) => current || user.addresses[0]);
+      if (targetUser?.addresses && targetUser.addresses.length > 0) {
+        setSelectedAddress((current) => current || targetUser.addresses![0]);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [fetchAccounts])
@@ -196,6 +201,14 @@ const CartScreen: React.FC = () => {
       return;
     }
 
+    if (paymentMethod === "credit" && !hasAssignedSeller) {
+      showAlert({
+        message: "El pago a crédito está restringido: se requiere un vendedor asignado a la cartera.",
+        type: "warning",
+      });
+      return;
+    }
+
     if (deliveryType === "domicilio") {
       if (!selectedAddress || !selectedAddress.description?.trim()) {
         showAlert({
@@ -243,17 +256,21 @@ const CartScreen: React.FC = () => {
         ? Object.values(groupedCart).map((item) => ({
             productId: item.id,
             address: selectedAddress,
-            quantity: Number(item.fundas) || 100,
-            unit: "fundas",
+            quantity: Number(item.fundas) || 50,
+            unit: item.unit || "fundas",
           }))
         : [];
 
     const formattedItems = Object.values(groupedCart).map((item) => ({
       productId: item.id,
-      quantity: Number(item.fundas) || 100,
+      quantity: Number(item.fundas) || 50,
+      name: item.name,
+      unit: item.unit || "fundas",
     }));
 
     const dataToSend: any = {
+      userId: assistedClient ? assistedClient.uid : undefined,
+      createdBySellerId: assistedClient ? user?.uid : undefined,
       deliveryType,
       deliveryPreference: deliveryType === "domicilio" ? deliveryPreference : undefined,
       deliveryAddress: deliveryType === "domicilio" ? selectedAddress : undefined,
@@ -279,12 +296,23 @@ const CartScreen: React.FC = () => {
       const response = await createOrder(dataToSend, idempotencyKey);
       hide();
 
+      if (!response || response.success === false || !response.orderNumber) {
+        showAlert({
+          message: response?.message || "No se pudo procesar el pedido. Intenta nuevamente.",
+          type: "error",
+        });
+        return;
+      }
+
       showAlert({
         message: `Tu pedido fue enviado exitosamente.\n Número de Orden: ${ORDER_PREFIX.ORD}${response.orderNumber}`,
         type: "success",
       });
 
       clearCart();
+      if (assistedClient) {
+        setAssistedClient(null);
+      }
       router.back();
     } catch (error: any) {
       console.error("Error enviando pedido:", error);
@@ -312,6 +340,23 @@ const CartScreen: React.FC = () => {
           style={styles.container}
           contentContainerStyle={{ paddingBottom: 250 }}
         >
+          {assistedClient && (
+            <View style={styles.assistedBanner}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.assistedBannerTitle}>Venta Asistida en Curso</Text>
+                <Text style={styles.assistedBannerClient}>
+                  Cliente: {assistedClient.names} {assistedClient.lastNames || ""}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setAssistedClient(null)}
+                style={styles.assistedCancelBtn}
+              >
+                <Text style={styles.assistedCancelBtnText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={styles.headerRow}>
             <Text style={styles.title}>Mi Carrito</Text>
             {cart.length > 0 && (
@@ -347,7 +392,7 @@ const CartScreen: React.FC = () => {
               <CartDeliverySection
                 deliveryType={deliveryType as "domicilio" | "almacen"}
                 onUpdateDeliveryType={updateDeliveryType}
-                userAddresses={user?.addresses || []}
+                userAddresses={targetUser?.addresses || []}
                 selectedAddress={selectedAddress}
                 onSelectAddress={handleSelectAddress}
                 customAddressText={customAddressText}
@@ -378,6 +423,7 @@ const CartScreen: React.FC = () => {
                 onRemoveReceipt={handleRemoveReceipt}
                 creditNote={creditNote}
                 onChangeCreditNote={setCreditNote}
+                hasAssignedSeller={hasAssignedSeller}
               />
 
               <Text style={styles.totalText}>
@@ -496,5 +542,40 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 20,
     color: Palette.primaryDark,
+  },
+  assistedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 8,
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  assistedBannerTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#1E40AF",
+    textTransform: "uppercase",
+  },
+  assistedBannerClient: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1E3A8A",
+    marginTop: 2,
+  },
+  assistedCancelBtn: {
+    backgroundColor: "#DBEAFE",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  assistedCancelBtnText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#1D4ED8",
   },
 });

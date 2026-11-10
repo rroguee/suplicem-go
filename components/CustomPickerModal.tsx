@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 type Option = {
   label: string;
   value: string;
+  isHeader?: boolean;
 };
 
 type Props = {
@@ -65,27 +66,36 @@ const CustomPickerModal: React.FC<Props> = ({
               data={options}
               keyExtractor={(item, index) => `${item.value}_${index}`}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.option,
-                    item.value === selectedValue && styles.optionSelected,
-                  ]}
-                  onPress={() => handleSelect(item.value)}
-                >
-                  <Text
+              renderItem={({ item }) => {
+                if (item.isHeader) {
+                  return (
+                    <View style={styles.headerOption}>
+                      <Text style={styles.headerOptionText}>{item.label}</Text>
+                    </View>
+                  );
+                }
+                return (
+                  <TouchableOpacity
                     style={[
-                      styles.optionText,
-                      item.value === selectedValue && styles.optionTextSelected,
+                      styles.option,
+                      item.value === selectedValue && styles.optionSelected,
                     ]}
+                    onPress={() => handleSelect(item.value)}
                   >
-                    {item.label}
-                  </Text>
-                  {item.value === selectedValue && (
-                    <Ionicons name="checkmark" size={18} color="#E31E24" />
-                  )}
-                </TouchableOpacity>
-              )}
+                    <Text
+                      style={[
+                        styles.optionText,
+                        item.value === selectedValue && styles.optionTextSelected,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                    {item.value === selectedValue && (
+                      <Ionicons name="checkmark" size={18} color="#E31E24" />
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
             />
           </View>
         </TouchableOpacity>
@@ -158,6 +168,19 @@ const styles = StyleSheet.create({
     color: "#0F294A",
     marginBottom: 12,
     textAlign: "center",
+  },
+  headerOption: {
+    backgroundColor: "#F1F5F9",
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    marginVertical: 4,
+  },
+  headerOptionText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#475569",
+    letterSpacing: 0.5,
   },
   option: {
     flexDirection: "row",

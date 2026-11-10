@@ -118,7 +118,13 @@ export const assignTripDriver = async (tripId: string, driverId: string) => {
 
 export const splitOrderTrips = async (
   orderId: string,
-  trips: Array<{ totalTons: number; driverId?: string; comments?: string }>
+  trips: Array<{
+    totalTons: number;
+    driverId?: string;
+    comments?: string;
+    deliveryId?: string;
+    destinationAddress?: any;
+  }>
 ) => {
   const result = await safeRequest(() =>
     protectedApi.post(`/trips/order/${orderId}/split-plan`, { trips })

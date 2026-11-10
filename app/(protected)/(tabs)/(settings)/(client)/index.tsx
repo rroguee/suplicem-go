@@ -1,71 +1,27 @@
-import CheckRender from "@/components/CheckRender";
-import ConfirmationModal from "@/components/ConfirmationModal";
-import { LegalSectionCard } from "@/components/profile/LegalSectionCard";
-import { ProfileAddressesCard } from "@/components/profile/ProfileAddressesCard";
-import { TermsAndConditionsModal } from "@/components/profile/TermsAndConditionsModal";
-import { ROLE } from "@/constants/UserConstants";
-import { Palette } from "@/constants/theme";
-import { useAlert } from "@/context/alertContext";
-import { AuthContext } from "@/context/authContext";
-import { useLoading } from "@/context/loadingContext";
-import { updateClientProfile } from "@/services/userService";
-import { Address } from "@/types/users";
-import { Feather, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import React, { useContext, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-
-type InfoRowProps = {
-  label: string;
-  value: string;
-  icon?: React.ReactNode;
-};
-
-const InfoRow: React.FC<InfoRowProps> = ({ label, value, icon }) => (
-  <View style={styles.infoRow}>
-    {icon && <View style={styles.iconWrapper}>{icon}</View>}
-    <View style={styles.infoTextWrapper}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
-    </View>
-  </View>
-);
-
-type InputRowProps = {
-  label: string;
-  value: string;
-  onChange: (text: string) => void;
-  placeholder?: string;
-  icon?: React.ReactNode;
-};
-
-const InputRow: React.FC<InputRowProps> = ({
-  label,
-  value,
-  onChange,
-  placeholder,
-  icon,
-}) => (
-  <View style={styles.infoRow}>
-    {icon && <View style={styles.iconWrapper}>{icon}</View>}
-    <View style={styles.infoTextWrapper}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <TextInput
-        style={styles.inputField}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor="#AAA"
-      />
-    </View>
-  </View>
-);
+import { Ionicons } from "@expo/vector-icons";
+import { AuthContext } from "@/context/authContext";
+import { useAlert } from "@/context/alertContext";
+import { useLoading } from "@/context/loadingContext";
+import { updateClientProfile } from "@/services/userService";
+import { Address } from "@/types/users";
+import ConfirmationModal from "@/components/ConfirmationModal";
+import { ProfileAddressesCard } from "@/components/profile/ProfileAddressesCard";
+import { LegalSectionCard } from "@/components/profile/LegalSectionCard";
+import { TermsAndConditionsModal } from "@/components/profile/TermsAndConditionsModal";
+import {
+  SettingsProfileCard,
+  SettingsLogoutButton,
+  SettingsInfoRow,
+} from "@/components/settings";
+import { Palette } from "@/constants/theme";
 
 const ClientSettingsMainScreen: React.FC = () => {
   const { user, logOut, logIn } = useContext(AuthContext);
@@ -109,17 +65,18 @@ const ClientSettingsMainScreen: React.FC = () => {
 
         const newUser = {
           ...user,
-          phone: phone,
-          addresses: addresses,
+          phone,
+          addresses,
         };
 
         logIn(newUser);
         showAlert({
-          message: "¡Perfil actualizado con éxito!",
+          message: "¡Perfil y direcciones actualizadas con éxito!",
           type: "success",
         });
+        setIsEditing(false);
       } catch (error) {
-        console.error("❌ Error en la actualización del perfil:", error);
+        console.error("Error al actualizar el cliente:", error);
         showAlert({
           message: "No se pudo actualizar el perfil. Inténtelo de nuevo.",
           type: "error",
@@ -143,129 +100,100 @@ const ClientSettingsMainScreen: React.FC = () => {
   if (!user) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Text style={styles.loadingText}>Cargando datos del usuario...</Text>
+        <Text style={styles.loadingText}>Cargando datos del cliente...</Text>
       </View>
     );
   }
 
-  const fullName = `${user.names} ${user.lastNames}`;
+  const fullName = `${user.names} ${user.lastNames}`.trim() || "Cliente Registrado";
 
   return (
-    <ScrollView
-      contentContainerStyle={[styles.container, { paddingBottom: 120 }]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.avatarContainer}>
-        <View style={styles.avatarPlaceholder}>
-          <Ionicons name="person" size={48} color={Palette.primary} />
-        </View>
-        <Text style={styles.name}>{fullName}</Text>
-        <Text style={styles.role}>
-          {user.userType === "client" ? "Cliente" : "Conductor"}
-        </Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.headerTitle}>Mi Cuenta</Text>
+
+      {/* Perfil del Cliente */}
+      <SettingsProfileCard
+        name={fullName}
+        email={user?.email}
+        phone={user?.phone}
+        badgeText={user.status === "active" ? "Cliente Activo" : "Cliente Registrado"}
+        badgeIcon="person"
+        badgeColor="#0369A1"
+        badgeBgColor="#E0F2FE"
+        badgeBorderColor="#BAE6FD"
+        avatarIcon="person"
+      />
+
+      {/* Información Personal */}
+      <Text style={styles.sectionTitle}>Datos Personales</Text>
+      <View style={styles.card}>
+        <SettingsInfoRow
+          label="Identificación"
+          value={`${user.identificationType || "Cédula"}: ${user.identification || "N/A"}`}
+          icon={<Ionicons name="card-outline" size={18} color="#0F294A" />}
+        />
+        <View style={styles.divider} />
+        <SettingsInfoRow
+          label="Correo Electrónico"
+          value={user.email || "N/A"}
+          icon={<Ionicons name="mail-outline" size={18} color="#0F294A" />}
+        />
+        <View style={styles.divider} />
+        <SettingsInfoRow
+          label="Teléfono Móvil"
+          value={phone}
+          icon={<Ionicons name="call-outline" size={18} color="#0F294A" />}
+          isEditing={isEditing}
+          onChangeText={setPhone}
+          placeholder="Ej: 8095551234"
+          keyboardType="phone-pad"
+        />
       </View>
 
-      <View style={styles.cardSharp}>
-        <InfoRow
-          label="Tipo de identificación"
-          value={user.identificationType}
-          icon={<Feather name="credit-card" size={22} color={Palette.primary} />}
-        />
-        <InfoRow
-          label="Número de identificación"
-          value={user.identification}
-          icon={<Feather name="hash" size={22} color={Palette.primary} />}
-        />
-        <InfoRow
-          label="Correo electrónico"
-          value={user.email}
-          icon={<Feather name="mail" size={22} color={Palette.primary} />}
-        />
+      {/* Direcciones Registradas */}
+      <ProfileAddressesCard
+        isEditing={isEditing}
+        addresses={addresses}
+        setAddresses={setAddresses}
+        userAddresses={user.addresses}
+      />
+
+      {/* Sección Legal */}
+      <LegalSectionCard onOpenTerms={() => setIsTermsModalVisible(true)} />
+
+      {/* Botones de Acción */}
+      <View style={styles.actionButtonsContainer}>
         {isEditing ? (
-          <InputRow
-            label="Teléfono"
-            value={phone}
-            onChange={setPhone}
-            placeholder="Introduce el nuevo teléfono"
-            icon={<Feather name="phone" size={22} color={Palette.primary} />}
-          />
+          <View style={{ flexDirection: "row", gap: 10, width: "100%" }}>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.cancelBtn]}
+              onPress={handleCancel}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.cancelBtnText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.saveBtn]}
+              onPress={handleEdit}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.saveBtnText}>Guardar</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
-          <InfoRow
-            label="Teléfono"
-            value={user.phone}
-            icon={<Feather name="phone" size={22} color={Palette.primary} />}
-          />
+          <TouchableOpacity
+            style={styles.editToggleBtn}
+            onPress={() => setIsEditing(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="create-outline" size={18} color={Palette.primary} />
+            <Text style={styles.editToggleText}>Editar Perfil y Direcciones</Text>
+          </TouchableOpacity>
         )}
       </View>
 
-      <CheckRender allowed={user?.userType === ROLE.CLIENT}>
-        <ProfileAddressesCard
-          isEditing={isEditing}
-          addresses={addresses}
-          setAddresses={setAddresses}
-          userAddresses={user.addresses}
-        />
-      </CheckRender>
-
-      <CheckRender allowed={user?.userType === ROLE.DRIVER}>
-        <View style={styles.cardSharp}>
-          <Text style={styles.sectionTitle}>Vehículo</Text>
-          {user.vehicle ? (
-            <>
-              <InfoRow
-                label="Marca"
-                value={user.vehicle.brand}
-                icon={
-                  <MaterialIcons
-                    name="directions-car"
-                    size={22}
-                    color={Palette.primary}
-                  />
-                }
-              />
-              <InfoRow
-                label="Modelo"
-                value={user.vehicle.model}
-                icon={<Feather name="tag" size={22} color={Palette.primary} />}
-              />
-            </>
-          ) : (
-            <Text style={styles.emptyText}>No registrado</Text>
-          )}
-        </View>
-      </CheckRender>
-
-      <LegalSectionCard
-        onOpenTerms={() => setIsTermsModalVisible(true)}
-      />
-
-      {isEditing && (
-        <TouchableOpacity
-          style={[styles.sharpButton, styles.cancelButton]}
-          onPress={handleCancel}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonTextSharp}>Cancelar</Text>
-        </TouchableOpacity>
-      )}
-
-      <TouchableOpacity
-        style={styles.sharpButton}
-        onPress={handleEdit}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.buttonTextSharp}>{isEditing ? "Guardar" : "Editar perfil"}</Text>
-      </TouchableOpacity>
-
-      {!isEditing && (
-        <TouchableOpacity
-          style={styles.logoutButtonSharp}
-          onPress={handleLogout}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.logoutTextSharp}>Cerrar sesión</Text>
-        </TouchableOpacity>
-      )}
+      {/* Cerrar Sesión */}
+      {!isEditing && <SettingsLogoutButton onPress={handleLogout} />}
 
       <TermsAndConditionsModal
         visible={isTermsModalVisible}
@@ -289,138 +217,95 @@ export default ClientSettingsMainScreen;
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    paddingTop: 45,
-    backgroundColor: "#F9FAFB",
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 90,
   },
   centered: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
   loadingText: {
     fontSize: 16,
-    color: "#4B5563",
+    color: "#64748B",
   },
-  avatarContainer: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 10,
-    backgroundColor: "#E5E7EB",
-  },
-  avatarPlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 10,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 2,
-    borderColor: Palette.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  name: {
-    fontSize: 20,
+  headerTitle: {
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#111827",
+    color: "#0F294A",
+    marginBottom: 14,
   },
-  role: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginTop: 2,
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#334155",
+    marginBottom: 10,
+    marginTop: 6,
   },
-  cardSharp: {
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#E2E8F0",
+    overflow: "hidden",
+    marginBottom: 18,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: Palette.primaryDark,
-    marginBottom: 12,
+  divider: {
+    height: 1,
+    backgroundColor: "#F1F5F9",
+    marginLeft: 64,
   },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+  actionButtonsContainer: {
+    marginVertical: 10,
   },
-  iconWrapper: {
-    width: 32,
-    alignItems: "center",
-    marginRight: 12,
-  },
-  infoTextWrapper: {
+  actionBtn: {
     flex: 1,
+    paddingVertical: 13,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  infoLabel: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#111827",
-    marginTop: 2,
-  },
-  inputField: {
-    backgroundColor: "#FAF8F5",
+  cancelBtn: {
+    backgroundColor: "#F1F5F9",
     borderWidth: 1,
     borderColor: "#CBD5E1",
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    height: 38,
-    fontSize: 13,
-    color: Palette.primaryDark,
-    marginTop: 4,
   },
-  emptyText: {
-    color: "#6b7280",
-    fontStyle: "italic",
-    marginVertical: 4,
-  },
-  sharpButton: {
-    backgroundColor: Palette.primary,
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  cancelButton: {
-    backgroundColor: "#6b7280",
-  },
-  buttonTextSharp: {
-    color: "#ffffff",
-    fontWeight: "bold",
-    fontSize: 15,
-  },
-  logoutButtonSharp: {
-    backgroundColor: "#fff",
-    borderWidth: 1.5,
-    borderColor: Palette.primary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 4,
-  },
-  logoutTextSharp: {
-    color: Palette.primary,
-    fontWeight: "bold",
+  cancelBtnText: {
     fontSize: 14,
+    fontWeight: "600",
+    color: "#475569",
+  },
+  saveBtn: {
+    backgroundColor: Palette.primary,
+  },
+  saveBtnText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  editToggleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 13,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  editToggleText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Palette.primary,
   },
 });

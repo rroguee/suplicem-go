@@ -1,9 +1,11 @@
-import React, { useContext } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useContext, useState, useEffect } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ScreenHeader from "@/components/ScreenHeader";
 import { AuthContext } from "@/context/authContext";
 import { useOrders } from "@/context/orderContext";
+import { Palette } from "@/constants/theme";
+import { getOrderDetail } from "@/services/orderService";
 import { formatRD } from "@/utils/currencyUtils";
 import { openExternalNavigation } from "@/utils/navigationUtils";
 import { useClientOrderTracking } from "../hooks/useClientOrderTracking";
@@ -27,8 +29,24 @@ export const ClientOrderDetailScreen: React.FC<
 > = ({ orderId }) => {
   const { user } = useContext(AuthContext);
   const { orders, updateOrder } = useOrders();
+  const [fetchedOrder, setFetchedOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const selectedOrder = orders.find((order) => order.id === orderId);
+  const orderFromContext = orders.find((order) => order.id === orderId);
+  const selectedOrder = orderFromContext || fetchedOrder;
+
+  useEffect(() => {
+    if (!orderFromContext && orderId) {
+      setLoading(true);
+      getOrderDetail(orderId)
+        .then((res: any) => {
+          if (res?.order) {
+            setFetchedOrder(res.order);
+          }
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [orderFromContext, orderId]);
 
   const {
     trip,
@@ -45,6 +63,15 @@ export const ClientOrderDetailScreen: React.FC<
   );
 
   const { handleRepeatOrder } = useRepeatOrder(selectedOrder);
+
+  if (loading) {
+    return (
+      <View style={styles.emptyContainer}>
+        <ActivityIndicator size="large" color={Palette.primary} />
+        <Text style={[styles.emptyText, { marginTop: 12 }]}>Cargando detalle del pedido...</Text>
+      </View>
+    );
+  }
 
   if (!selectedOrder) {
     return (
@@ -124,9 +151,10 @@ export const ClientOrderDetailScreen: React.FC<
         </View>
       )}
 
-      {/* 1.5. Comprobante de Pago (Adjuntar/Cambiar) */}
+      {/* 1.5. Comprobante de Pago (Solo lectura para vendedores) */}
       <ClientOrderReceiptCard
         order={selectedOrder}
+        canUploadReceipt={user?.userType !== "seller"}
         onReceiptUpdated={(newReceiptUrl) => {
           if (selectedOrder.id) {
             updateOrder(selectedOrder.id, { receiptImage: newReceiptUrl });
@@ -134,11 +162,13 @@ export const ClientOrderDetailScreen: React.FC<
         }}
       />
 
-      {/* 2. Banner de Repetir Pedido */}
-      <ClientOrderReorderBanner
-        itemsCount={selectedOrder.items?.length || 0}
-        onRepeatOrder={handleRepeatOrder}
-      />
+      {/* 2. Banner de Repetir Pedido (Exclusivo para clientes) */}
+      {user?.userType !== "seller" && (
+        <ClientOrderReorderBanner
+          itemsCount={selectedOrder.items?.length || 0}
+          onRepeatOrder={handleRepeatOrder}
+        />
+      )}
 
       {/* 3. Lista de Productos */}
       <View style={styles.section}>

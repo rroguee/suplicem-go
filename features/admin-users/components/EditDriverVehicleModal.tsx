@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Palette } from '@/constants/theme';
 import { updateDriverProfile } from '@/services/userService';
+import { ActionSuccessModal } from '@/components/common/ActionSuccessModal';
 
 interface EditDriverVehicleModalProps {
   visible: boolean;
@@ -29,6 +30,7 @@ export function EditDriverVehicleModal({
   const [tons, setTons] = useState(initialVehicle?.tons || '');
   const [plate, setPlate] = useState(initialVehicle?.plateNumber || '');
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSave = async () => {
     if (!tons.trim()) {
@@ -47,9 +49,7 @@ export function EditDriverVehicleModal({
         plate.trim() || 'N/A'
       );
       setLoading(false);
-      Alert.alert('Éxito', 'Capacidad del vehículo actualizada.');
-      onSuccess();
-      onClose();
+      setShowSuccess(true);
     } catch (err: any) {
       setLoading(false);
       Alert.alert('Error', err?.message || 'No se pudo actualizar el vehículo.');
@@ -92,6 +92,17 @@ export function EditDriverVehicleModal({
           </View>
         </View>
       </View>
+
+      <ActionSuccessModal
+        visible={showSuccess}
+        title="¡Vehículo Actualizado!"
+        message="La capacidad de carga del chofer se ha guardado correctamente."
+        onClose={() => {
+          setShowSuccess(false);
+          onSuccess();
+          onClose();
+        }}
+      />
     </Modal>
   );
 }
