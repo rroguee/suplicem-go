@@ -23,15 +23,6 @@ import {
   View,
 } from "react-native";
 import { Trip } from "@/types/trips";
-import { FilterChips, FilterOption } from "@/components/FilterChips";
-
-type DriverTripFilter = "todos" | "assigned" | "general";
-
-const DRIVER_TRIP_FILTERS: FilterOption<DriverTripFilter>[] = [
-  { id: "todos", label: "Todos" },
-  { id: "assigned", label: "Asignados a ti" },
-  { id: "general", label: "Generales" },
-];
 
 // Componente para el mensaje de no hay viajes (NUEVO)
 const NoTripsMessage = () => (
@@ -39,8 +30,8 @@ const NoTripsMessage = () => (
     <Ionicons name="car-outline" size={80} color="#E31E24" />
     <Text style={noTripsStyles.title}>¡Todo despejado!</Text>
     <Text style={noTripsStyles.message}>
-      No hay viajes disponibles en este momento. Vuelve a intentarlo más tarde o
-      espera nuevas asignaciones.
+      No tienes viajes asignados en este momento. Vuelve a intentarlo más tarde o
+      espera nuevas asignaciones del administrador.
     </Text>
   </View>
 );
@@ -49,7 +40,6 @@ const DriverHomeScreen = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [activeTrip, setActiveTrip] = useState<any>(null);
   const [actualTrips, setActualTrips] = useState<any[]>([]);
-  const [selectedFilter, setSelectedFilter] = useState<DriverTripFilter>("todos");
   const router = useRouter();
   const { show, hide } = useLoading();
   const { showAlert } = useAlert();
@@ -114,58 +104,49 @@ const DriverHomeScreen = () => {
     }
   };
 
-  // Contadores dinámicos para los chips de filtro
-  const tripCounts = useMemo(() => {
-    let assignedCount = 0;
-    let generalCount = 0;
+  const handleStartTripFromHome = async (tripItem: any) => {
+    try {
+      show();
+      const detailRes = await getTripDetail(tripItem.id);
+      const fullTrip = detailRes?.success && detailRes?.trip ? detailRes.trip : tripItem;
 
-    trips.forEach((t) => {
-      const isAssignedToMe = Boolean(
-        currentUserId && (t.assignedDriverId === currentUserId || (t as any).driverId === currentUserId)
-      );
-      if (isAssignedToMe) {
-        assignedCount++;
+      // Iniciar el viaje en el backend (status: started)
+      const startRes = await updateTripStatus(tripItem.id, "started");
+      if (startRes?.success) {
+        const startedTrip = { ...fullTrip, status: "started" };
+        saveTrip(startedTrip as any);
+        setActiveTrip(startedTrip);
+        showAlert({
+          message: `Viaje #${tripItem.tripNumber} iniciado. ¡Buen viaje!`,
+          type: "success",
+        });
+        router.push("/driver-order");
       } else {
-        generalCount++;
+        saveTrip({ ...fullTrip, status: "accepted" } as any);
+        showAlert({
+          message: startRes?.message || "No se pudo iniciar la ruta.",
+          type: "warning",
+        });
+        router.push("/driver-order");
       }
-    });
+    } catch (err: any) {
+      showAlert({
+        message: err?.message || "Error al iniciar la ruta.",
+        type: "error",
+      });
+    } finally {
+      hide();
+    }
+  };
 
-    return {
-      todos: trips.length,
-      assigned: assignedCount,
-      general: generalCount,
-    };
-  }, [trips, currentUserId]);
-
-  // Lista procesada: filtrada por chip y con viajes asignados estrictamente DE PRIMERO
+  // Lista procesada: orden cronológico FIFO
   const displayedTrips = useMemo(() => {
-    const filtered = trips.filter((trip) => {
-      const isAssignedToMe = Boolean(
-        currentUserId && (trip.assignedDriverId === currentUserId || (trip as any).driverId === currentUserId)
-      );
-      if (selectedFilter === "assigned") return isAssignedToMe;
-      if (selectedFilter === "general") return !isAssignedToMe;
-      return true;
-    });
-
-    return [...filtered].sort((a, b) => {
-      const aIsMine = Boolean(
-        currentUserId && (a.assignedDriverId === currentUserId || (a as any).driverId === currentUserId)
-      );
-      const bIsMine = Boolean(
-        currentUserId && (b.assignedDriverId === currentUserId || (b as any).driverId === currentUserId)
-      );
-
-      // Prioridad 1: Los asignados al conductor van arriba
-      if (aIsMine && !bIsMine) return -1;
-      if (!aIsMine && bIsMine) return 1;
-
-      // Prioridad 2: Fecha más antigua primero (FIFO: mayor tiempo esperando)
+    return [...trips].sort((a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateA - dateB;
     });
-  }, [trips, selectedFilter, currentUserId]);
+  }, [trips]);
 
   const validateTrips = async () => {
     try {
@@ -367,23 +348,14 @@ const DriverHomeScreen = () => {
       ))}
 
         <View style={styles.headerRow}>
-        <Text style={styles.title}>Viajes disponibles</Text>
+        <Text style={styles.title}>Tus Viajes Asignados</Text>
         <TouchableOpacity onPress={fetchTrips} style={styles.refreshButton}>
           <Ionicons name="refresh" size={24} color="#E31E24" />
         </TouchableOpacity>
       </View>
 
-      {/* Filtro por Chips */}
-      <FilterChips<DriverTripFilter>
-        options={DRIVER_TRIP_FILTERS}
-        activeFilter={selectedFilter}
-        onSelectFilter={setSelectedFilter}
-        counts={tripCounts}
-        style={styles.filterChipsContainer}
-      />
-
       {displayedTrips.length > 0 ? (
-        displayedTrips.map((trip, index) => (
+        displayedTrips.map((trip) => (
           <View key={trip.id} style={styles.card}>
             <View style={styles.cardHeaderRow}>
               <Text style={styles.label}>Viaje: {trip.tripNumber}</Text>
@@ -413,59 +385,58 @@ const DriverHomeScreen = () => {
               </View>
             ) : null}
 
-            <View style={styles.cardActionsRow}>
+            <View style={styles.cardActionsContainer}>
               <TouchableOpacity
-                style={[styles.acceptCardButton, { backgroundColor: "#2563EB" }]}
+                style={styles.mainStartRouteButton}
                 activeOpacity={0.8}
-                onPress={() => {
-                  saveTrip({ ...trip, status: "accepted" } as any);
-                  router.push("/driver-order");
-                }}
+                onPress={() => handleStartTripFromHome(trip)}
               >
                 <Ionicons
-                  name="navigate-outline"
-                  size={18}
+                  name="navigate"
+                  size={19}
                   color="#fff"
                 />
-                <Text style={styles.buttonText}>
+                <Text style={styles.mainStartRouteButtonText}>
                   Iniciar Ruta
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.rejectCardButton}
-                activeOpacity={0.8}
-                onPress={() => handleOpenRejectModal(trip)}
-              >
-                <Ionicons
-                  name="close-circle-outline"
-                  size={18}
-                  color="#DC2626"
-                />
-                <Text style={styles.rejectButtonText}>
-                  Rechazar
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.secondaryActionsRow}>
+                <TouchableOpacity
+                  style={styles.rejectCardButton}
+                  activeOpacity={0.8}
+                  onPress={() => handleOpenRejectModal(trip)}
+                >
+                  <Ionicons
+                    name="close-circle-outline"
+                    size={18}
+                    color="#DC2626"
+                  />
+                  <Text style={styles.rejectButtonText}>
+                    Rechazar
+                  </Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.detailCardButton}
-                activeOpacity={0.8}
-                onPress={() => {
-                  router.push({
-                    pathname: "/driver-trip-preview",
-                    params: { tripId: trip.id },
-                  });
-                }}
-              >
-                <Ionicons
-                  name="eye-outline"
-                  size={18}
-                  color="#0F294A"
-                />
-                <Text style={styles.detailButtonText}>
-                  Detalle
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.detailCardButton}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    router.push({
+                      pathname: "/driver-trip-preview",
+                      params: { tripId: trip.id },
+                    });
+                  }}
+                >
+                  <Ionicons
+                    name="eye-outline"
+                    size={18}
+                    color="#0F294A"
+                  />
+                  <Text style={styles.detailButtonText}>
+                    Ver Detalle
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
             {hasAcceptedTrip && (
               <Text style={styles.disabledTripNotice}>
@@ -474,16 +445,6 @@ const DriverHomeScreen = () => {
             )}
           </View>
         ))
-      ) : trips.length > 0 ? (
-        <View style={noTripsStyles.container}>
-          <Ionicons name="filter-outline" size={60} color="#94A3B8" />
-          <Text style={noTripsStyles.title}>Sin viajes en este filtro</Text>
-          <Text style={noTripsStyles.message}>
-            {selectedFilter === "assigned"
-              ? "No tienes viajes asignados directamente en este momento."
-              : "No hay viajes disponibles en esta categoría."}
-          </Text>
-        </View>
       ) : (
         <NoTripsMessage />
       )}
@@ -722,20 +683,28 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontWeight: "500",
   },
-  cardActionsRow: {
-    flexDirection: "row",
-    gap: 8,
+  cardActionsContainer: {
     marginTop: 16,
+    gap: 8,
   },
-  acceptCardButton: {
-    flex: 1.2,
+  mainStartRouteButton: {
     backgroundColor: "#2563EB",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingVertical: 12,
+    gap: 8,
+    paddingVertical: 13,
     borderRadius: 10,
+    width: "100%",
+  },
+  mainStartRouteButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
+  secondaryActionsRow: {
+    flexDirection: "row",
+    gap: 8,
   },
   rejectCardButton: {
     flex: 1,
@@ -745,8 +714,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
-    paddingVertical: 12,
+    gap: 6,
+    paddingVertical: 11,
     borderRadius: 10,
   },
   rejectButtonText: {
@@ -763,16 +732,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    paddingVertical: 12,
+    paddingVertical: 11,
     borderRadius: 10,
   },
   detailButtonText: {
     color: "#0F294A",
     fontWeight: "bold",
     fontSize: 14,
-  },
-
-  filterChipsContainer: {
-    marginBottom: 16,
   },
 });
