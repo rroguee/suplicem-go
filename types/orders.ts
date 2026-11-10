@@ -66,7 +66,6 @@ export interface Order {
   aiRiskFlag?: boolean;
   aiRiskScore?: number;
   aiRiskReason?: string;
-  deliveryPreference?: "single_trip" | "partial";
   totalTons?: number;
   pendingBalance?: number;
   deliveredTons?: number;

@@ -2,6 +2,10 @@ import React from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import CustomPickerModal from "@/components/CustomPickerModal";
 import { DRIVER_VEHICLE_TON_OPTIONS } from "@/constants/cartConstants";
+import {
+  getVehicleBrandOptions,
+  getVehicleModelOptions,
+} from "@/constants/vehicleBrands";
 
 export interface VehicleData {
   brand: string;
@@ -16,30 +20,6 @@ interface AdminUserVehicleFieldsProps {
   onChangeVehicle: (updated: Partial<VehicleData>) => void;
 }
 
-const BRAND_OPTIONS = [
-  { label: "Toyota", value: "Toyota" },
-  { label: "Hyundai", value: "Hyundai" },
-  { label: "Isuzu", value: "Isuzu" },
-  { label: "Mitsubishi", value: "Mitsubishi" },
-  { label: "Daihatsu", value: "Daihatsu" },
-  { label: "Mack", value: "Mack" },
-  { label: "Freightliner", value: "Freightliner" },
-  { label: "Internacional", value: "Internacional" },
-  { label: "Otro", value: "Otro" },
-];
-
-const MODEL_MAP: Record<string, string[]> = {
-  Toyota: ["Dyna", "Hilux", "Hiace", "Tacoma", "Otro"],
-  Hyundai: ["H100", "Porter", "Mighty", "HD72", "Otro"],
-  Isuzu: ["Elf", "NPR", "FRR", "Forward", "Otro"],
-  Mitsubishi: ["Canter", "Fuso", "L200", "Otro"],
-  Daihatsu: ["Delta", "Hijet", "Otro"],
-  Mack: ["Granite", "Vision", "Pinnacle", "Otro"],
-  Freightliner: ["M2 106", "Cascadia", "Otro"],
-  Internacional: ["WorkStar", "DuraStar", "Otro"],
-  Otro: ["Estándar", "Personalizado", "Otro"],
-};
-
 const YEAR_OPTIONS = Array.from({ length: 36 }, (_, i) => {
   const y = String(1990 + i);
   return { label: y, value: y };
@@ -49,10 +29,7 @@ export const AdminUserVehicleFields: React.FC<AdminUserVehicleFieldsProps> = ({
   vehicle,
   onChangeVehicle,
 }) => {
-  const currentModels = (MODEL_MAP[vehicle.brand] || ["Estándar", "Otro"]).map((m) => ({
-    label: m,
-    value: m,
-  }));
+  const currentModels = getVehicleModelOptions(vehicle.brand);
 
   return (
     <View style={styles.card}>
@@ -67,7 +44,9 @@ export const AdminUserVehicleFields: React.FC<AdminUserVehicleFieldsProps> = ({
         onValueChange={(selectedBrand) => {
           onChangeVehicle({ brand: selectedBrand, model: "" });
         }}
-        options={BRAND_OPTIONS}
+        options={getVehicleBrandOptions()}
+        searchable
+        searchPlaceholder="Buscar marca de camión..."
       />
 
       <CustomPickerModal

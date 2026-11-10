@@ -4,6 +4,7 @@ import {
   Modal,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -20,6 +21,8 @@ type Props = {
   selectedValue: string;
   onValueChange: (value: string) => void;
   options: Option[];
+  searchable?: boolean;
+  searchPlaceholder?: string;
 };
 
 const CustomPickerModal: React.FC<Props> = ({
@@ -27,8 +30,22 @@ const CustomPickerModal: React.FC<Props> = ({
   selectedValue,
   onValueChange,
   options,
+  searchable = false,
+  searchPlaceholder = "Buscar...",
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const filteredOptions = searchable
+    ? options.filter((opt) =>
+        opt.label.toLowerCase().includes(query.trim().toLowerCase())
+      )
+    : options;
+
+  const handleOpen = () => {
+    setQuery("");
+    setModalVisible(true);
+  };
 
   const handleSelect = (value: string) => {
     onValueChange(value);
@@ -44,7 +61,7 @@ const CustomPickerModal: React.FC<Props> = ({
 
       <TouchableOpacity
         style={styles.selectBox}
-        onPress={() => setModalVisible(true)}
+        onPress={handleOpen}
         activeOpacity={0.7}
       >
         <Text style={styles.selectedText}>{selectedLabel}</Text>
@@ -62,8 +79,22 @@ const CustomPickerModal: React.FC<Props> = ({
             <View style={styles.modalHandleBar} />
             <Text style={styles.modalHeaderTitle}>{label}</Text>
 
+            {searchable && (
+              <TextInput
+                style={styles.searchInput}
+                placeholder={searchPlaceholder}
+                placeholderTextColor="#94A3B8"
+                value={query}
+                onChangeText={setQuery}
+                autoCorrect={false}
+              />
+            )}
+
             <FlatList
-              data={options}
+              data={filteredOptions}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No se encontraron resultados</Text>
+              }
               keyExtractor={(item, index) => `${item.value}_${index}`}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
               renderItem={({ item }) => {
@@ -181,6 +212,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#475569",
     letterSpacing: 0.5,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#0F294A",
+    backgroundColor: "#F8FAFC",
+    marginBottom: 10,
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#64748B",
+    paddingVertical: 16,
+    fontSize: 13,
   },
   option: {
     flexDirection: "row",

@@ -8,7 +8,6 @@ interface DriverCardItemProps {
   driver: User;
   orderTons: number;
   isFractional?: boolean;
-  deliveryPreference?: "single_trip" | "partial";
   isSelected: boolean;
   activeTrip?: Trip;
   onSelect: () => void;
@@ -18,7 +17,6 @@ export const DriverCardItem: React.FC<DriverCardItemProps> = ({
   driver,
   orderTons,
   isFractional,
-  deliveryPreference,
   isSelected,
   activeTrip,
   onSelect,
@@ -26,7 +24,6 @@ export const DriverCardItem: React.FC<DriverCardItemProps> = ({
   const capacity = Number(driver.vehicle?.tons) || 0;
   const isEnRoute = !!activeTrip;
   const requiredTrips = capacity > 0 ? Math.ceil(orderTons / capacity) : 1;
-  const isSingleTripViolated = deliveryPreference === "single_trip" && capacity > 0 && capacity < orderTons;
 
   return (
     <TouchableOpacity
@@ -74,16 +71,10 @@ export const DriverCardItem: React.FC<DriverCardItemProps> = ({
       </View>
 
       {capacity > 0 && orderTons > 0 && (
-        <View style={[styles.tripsInfoBox, isSingleTripViolated ? styles.alertBox : styles.okBox]}>
-          <Ionicons
-            name={isSingleTripViolated ? "alert-circle" : "information-circle-outline"}
-            size={16}
-            color={isSingleTripViolated ? "#B91C1C" : "#0369A1"}
-          />
-          <Text style={[styles.tripsInfoText, isSingleTripViolated ? styles.alertText : styles.okText]}>
-            {isSingleTripViolated
-              ? `Requiere ${requiredTrips} viajes (Cliente solicitó entrega completa en 1 solo viaje)`
-              : requiredTrips === 1
+        <View style={[styles.tripsInfoBox, styles.okBox]}>
+          <Ionicons name="information-circle-outline" size={16} color="#0369A1" />
+          <Text style={[styles.tripsInfoText, styles.okText]}>
+            {requiredTrips === 1
               ? (isFractional ? "Completa la carga restante en 1 solo viaje" : "Completa la orden en 1 solo viaje")
               : (isFractional
                   ? `Completará la carga restante en ${requiredTrips} viajes de hasta ${capacity.toFixed(2)} t`
@@ -186,9 +177,6 @@ const styles = StyleSheet.create({
   okBox: {
     backgroundColor: "#F0F9FF",
   },
-  alertBox: {
-    backgroundColor: "#FEF2F2",
-  },
   tripsInfoText: {
     fontSize: 11,
     fontWeight: "500",
@@ -196,8 +184,5 @@ const styles = StyleSheet.create({
   },
   okText: {
     color: "#0369A1",
-  },
-  alertText: {
-    color: "#B91C1C",
   },
 });

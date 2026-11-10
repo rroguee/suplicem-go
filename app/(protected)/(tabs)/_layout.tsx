@@ -82,7 +82,7 @@ export default function TabLayout() {
                   : "paper-plane"
               }
               size={28}
-              color={color}
+              color={color as string}
             />
           ),
         }}

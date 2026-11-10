@@ -30,7 +30,6 @@ export const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({
   const isFractional = typeof targetTons === "number";
   const displayTons = isFractional ? targetTons : (Number(order.totalTons || order.pendingBalance) || 0);
   const totalOrderTons = Number(order.totalTons || order.pendingBalance) || 0;
-  const isSingleTrip = order.deliveryPreference === "single_trip";
 
   const getDriverActiveTrip = (driverUid?: string) => {
     if (!driverUid) return undefined;
@@ -69,16 +68,6 @@ export const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({
               </Text>
               <Text style={styles.summaryTons}>{displayTons.toFixed(2)} t</Text>
             </View>
-            <View style={[styles.preferenceBadge, isSingleTrip ? styles.prefSingle : styles.prefPartial]}>
-              <Ionicons
-                name={isSingleTrip ? "alert-circle-outline" : "layers-outline"}
-                size={14}
-                color={isSingleTrip ? "#C2410C" : "#0369A1"}
-              />
-              <Text style={[styles.preferenceText, isSingleTrip ? styles.textSingle : styles.textPartial]}>
-                {isSingleTrip ? "Preferencia: Entrega Completa (1 solo viaje)" : "Preferencia: Parcial / Sin preferencia"}
-              </Text>
-            </View>
           </View>
 
           <ScrollView style={styles.driversList} showsVerticalScrollIndicator={false}>
@@ -109,7 +98,6 @@ export const DriverSelectionModal: React.FC<DriverSelectionModalProps> = ({
                 driver={drv}
                 orderTons={displayTons}
                 isFractional={isFractional}
-                deliveryPreference={order.deliveryPreference}
                 isSelected={selectedDriverId === drv.uid}
                 activeTrip={getDriverActiveTrip(drv.uid)}
                 onSelect={() => {
@@ -190,30 +178,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#0F294A",
-  },
-  preferenceBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  prefSingle: {
-    backgroundColor: "#FFEDD5",
-  },
-  prefPartial: {
-    backgroundColor: "#E0F2FE",
-  },
-  preferenceText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  textSingle: {
-    color: "#C2410C",
-  },
-  textPartial: {
-    color: "#0369A1",
   },
   driversList: {
     marginBottom: 10,

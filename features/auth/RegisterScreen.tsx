@@ -130,7 +130,9 @@ export const RegisterScreen: React.FC = () => {
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.button}
-        onPress={handleSubmit(onSubmit)}
+        onPress={() => {
+          void handleSubmit(onSubmit)();
+        }}
       >
         <Text style={styles.buttonText}>Registrarse</Text>
       </TouchableOpacity>

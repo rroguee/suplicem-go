@@ -1,13 +1,11 @@
 import { useLoading } from "@/context/loadingContext";
 import { AcceptedTripContext } from "@/context/TripContext";
 import { getAllTrips, getTripDetail } from "@/services/tripsService";
-import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import { useAlert } from "@/context/alertContext";
 import { FilterChips, FilterOption } from "@/components/FilterChips";
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -55,13 +53,6 @@ const TripsScreen: React.FC = () => {
   const { saveTrip } = useContext(AcceptedTripContext);
   const { showAlert } = useAlert();
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchTrips();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-  );
-
   const fetchTrips = async () => {
     show();
     const data = await getAllTrips();
@@ -76,6 +67,13 @@ const TripsScreen: React.FC = () => {
       });
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTrips();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
 
   const statusTranslation: Record<string, StatusInfo> = {
     available: { text: "Pendiente", color: "#FFA500" },

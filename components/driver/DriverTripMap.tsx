@@ -1,6 +1,6 @@
 import React from "react";
 import { Image, StyleSheet, View, Text, Platform } from "react-native";
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "@/components/MapViewWrapper";
 import { calculateTripEstimate, WAREHOUSE_LOCATION } from "@/utils/tripEstimate";
 
 type DriverTripMapProps = {

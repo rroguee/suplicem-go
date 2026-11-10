@@ -26,7 +26,9 @@ export const CancelTripModal: React.FC<CancelTripModalProps> = ({
   onCancel,
   isSubmitting = false,
 }) => {
-  const isConfirmDisabled = !reason.trim() || isSubmitting;
+  const trimmedLength = reason.trim().length;
+  const isReasonInvalid = trimmedLength > 0 && trimmedLength < 5;
+  const isConfirmDisabled = trimmedLength < 5 || isSubmitting;
 
   return (
     <Modal
@@ -39,7 +41,7 @@ export const CancelTripModal: React.FC<CancelTripModalProps> = ({
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Cancelar Viaje</Text>
           <Text style={styles.modalSubtitle}>
-            Debes ingresar un motivo o justificación para cancelar este viaje. Las órdenes asociadas serán liberadas.
+            Debes ingresar un motivo o justificación (mínimo 5 caracteres) para cancelar este viaje. Las órdenes asociadas serán liberadas.
           </Text>
 
           <TextInput
@@ -52,6 +54,12 @@ export const CancelTripModal: React.FC<CancelTripModalProps> = ({
             numberOfLines={4}
             editable={!isSubmitting}
           />
+
+          {isReasonInvalid && (
+            <Text style={styles.errorText}>
+              El motivo debe tener al menos 5 caracteres ({trimmedLength}/5).
+            </Text>
+          )}
 
           <View style={styles.modalButtonsContainer}>
             <TouchableOpacity
@@ -128,6 +136,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#F9FAFB",
     color: "#111827",
     minHeight: 90,
+  },
+  errorText: {
+    color: "#DC2626",
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 12,
   },
   modalButtonsContainer: {
     flexDirection: "row",

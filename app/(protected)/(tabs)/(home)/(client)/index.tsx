@@ -214,7 +214,7 @@ const ClientHomeScreen: React.FC = () => {
                   : "No se encontraron productos disponibles."}
               </Text>
             </View>
-          ) : null
+          ) : undefined
         }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}

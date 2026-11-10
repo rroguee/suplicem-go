@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { startTransition, useContext, useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -37,12 +37,14 @@ const DriverSettingsMainScreen: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      setPhone(user.phone || "");
-      setVehicleBrand(user.vehicle?.brand || "");
-      setVehicleModel(user.vehicle?.model || "");
-      setVehicleYear(user.vehicle?.year || "");
-      setVehicleTons(user.vehicle?.tons || "");
-      setVehiclePlateNumber(user.vehicle?.plateNumber || "");
+      startTransition(() => {
+        setPhone(user.phone || "");
+        setVehicleBrand(user.vehicle?.brand || "");
+        setVehicleModel(user.vehicle?.model || "");
+        setVehicleYear(user.vehicle?.year || "");
+        setVehicleTons(user.vehicle?.tons || "");
+        setVehiclePlateNumber(user.vehicle?.plateNumber || "");
+      });
     }
   }, [user]);
 
