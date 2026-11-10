@@ -10,6 +10,8 @@ interface RegisterPersonalFieldsProps {
   errors: FieldErrors<RegisterFormData>;
   onLookupCedula?: () => void;
   isLookingUpCedula?: boolean;
+  onLookupRnc?: () => void;
+  isLookingUpRnc?: boolean;
   identificationType?: string;
   personType?: "fisica" | "juridica";
   onPersonTypeChange?: (type: "fisica" | "juridica") => void;
@@ -20,6 +22,8 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
   errors,
   onLookupCedula,
   isLookingUpCedula,
+  onLookupRnc,
+  isLookingUpRnc,
   identificationType = "Cedula",
   personType = "fisica",
   onPersonTypeChange,
@@ -89,6 +93,27 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
             <Text style={styles.error}>{errors.companyRnc.message}</Text>
           )}
 
+          {onLookupRnc && (
+            <TouchableOpacity
+              style={styles.lookupButton}
+              onPress={onLookupRnc}
+              disabled={isLookingUpRnc}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="search-outline"
+                size={16}
+                color="#E31E24"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.lookupButtonText}>
+                {isLookingUpRnc
+                  ? "Consultando en DGII..."
+                  : "Consultar RNC (DGII)"}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           <Controller
             control={control}
             name="companyName"
@@ -107,57 +132,62 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
           )}
         </View>
       )}
-      <Controller
-        control={control}
-        name="identificationType"
-        render={({ field: { value, onChange } }) => (
-          <CustomPickerModal
-            label="Tipo de documento"
-            selectedValue={value}
-            onValueChange={onChange}
-            options={[
-              { label: "Cédula", value: "Cedula" },
-              { label: "Pasaporte", value: "Pasaporte" },
-            ]}
+      {/* Documento personal (solo si es Persona Física) */}
+      {personType !== "juridica" && (
+        <>
+          <Controller
+            control={control}
+            name="identificationType"
+            render={({ field: { value, onChange } }) => (
+              <CustomPickerModal
+                label="Tipo de documento"
+                selectedValue={value}
+                onValueChange={onChange}
+                options={[
+                  { label: "Cédula", value: "Cedula" },
+                  { label: "Pasaporte", value: "Pasaporte" },
+                ]}
+              />
+            )}
           />
-        )}
-      />
 
-      <Controller
-        control={control}
-        name="identification"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="No. de identificación"
-            placeholderTextColor="#999"
-            value={value}
-            onChangeText={onChange}
-            keyboardType="default"
+          <Controller
+            control={control}
+            name="identification"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="No. de identificación"
+                placeholderTextColor="#999"
+                value={value}
+                onChangeText={onChange}
+                keyboardType="default"
+              />
+            )}
           />
-        )}
-      />
-      {errors.identification && (
-        <Text style={styles.error}>{errors.identification.message}</Text>
-      )}
+          {errors.identification && (
+            <Text style={styles.error}>{errors.identification.message}</Text>
+          )}
 
-      {identificationType === "Cedula" && onLookupCedula && (
-        <TouchableOpacity
-          style={styles.lookupButton}
-          onPress={onLookupCedula}
-          disabled={isLookingUpCedula}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name="search-outline"
-            size={16}
-            color="#E31E24"
-            style={{ marginRight: 6 }}
-          />
-          <Text style={styles.lookupButtonText}>
-            {isLookingUpCedula ? "Consultando en JCE..." : "Consultar Cédula (JCE)"}
-          </Text>
-        </TouchableOpacity>
+          {identificationType === "Cedula" && onLookupCedula && (
+            <TouchableOpacity
+              style={styles.lookupButton}
+              onPress={onLookupCedula}
+              disabled={isLookingUpCedula}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="search-outline"
+                size={16}
+                color="#E31E24"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.lookupButtonText}>
+                {isLookingUpCedula ? "Consultando en JCE..." : "Consultar Cédula (JCE)"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </>
       )}
 
       <Controller
@@ -211,35 +241,40 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
         <Text style={styles.error}>{errors.confirmPassword.message}</Text>
       )}
 
-      <Controller
-        control={control}
-        name="names"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Nombres"
-            placeholderTextColor="#999"
-            value={value}
-            onChangeText={onChange}
+      {/* Nombres y Apellidos (solo si es Persona Física) */}
+      {personType !== "juridica" && (
+        <>
+          <Controller
+            control={control}
+            name="names"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Nombres"
+                placeholderTextColor="#999"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
           />
-        )}
-      />
-      {errors.names && <Text style={styles.error}>{errors.names.message}</Text>}
+          {errors.names && <Text style={styles.error}>{errors.names.message}</Text>}
 
-      <Controller
-        control={control}
-        name="lastNames"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Apellidos"
-            placeholderTextColor="#999"
-            value={value}
-            onChangeText={onChange}
+          <Controller
+            control={control}
+            name="lastNames"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Apellidos"
+                placeholderTextColor="#999"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
           />
-        )}
-      />
-      {errors.lastNames && <Text style={styles.error}>{errors.lastNames.message}</Text>}
+          {errors.lastNames && <Text style={styles.error}>{errors.lastNames.message}</Text>}
+        </>
+      )}
 
       <Controller
         control={control}
@@ -247,7 +282,11 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
         render={({ field: { onChange, value } }) => (
           <TextInput
             style={styles.input}
-            placeholder="Teléfono"
+            placeholder={
+              personType === "juridica"
+                ? "Teléfono de contacto (Opcional)"
+                : "Teléfono"
+            }
             placeholderTextColor="#999"
             keyboardType="phone-pad"
             value={value}

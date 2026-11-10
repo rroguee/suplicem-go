@@ -39,6 +39,8 @@ export const RegisterScreen: React.FC = () => {
     setAcceptedTerms,
     handleLookupCedula,
     isLookingUpCedula,
+    handleLookupRnc,
+    isLookingUpRnc,
     identificationType,
     personType,
   } = useRegister();
@@ -61,35 +63,50 @@ export const RegisterScreen: React.FC = () => {
           errors={errors}
           onLookupCedula={handleLookupCedula}
           isLookingUpCedula={isLookingUpCedula}
+          onLookupRnc={handleLookupRnc}
+          isLookingUpRnc={isLookingUpRnc}
           identificationType={identificationType}
           personType={personType}
-          onPersonTypeChange={(type) => setValue("personType", type)}
+          onPersonTypeChange={(type) => {
+            setValue("personType", type);
+            if (type === "juridica") {
+              setValue("userType", "client");
+              setValue("identificationType", "RNC");
+            }
+          }}
         />
 
-        <RegisterIdUploadCard
-          identificationImage={identificationImage}
-          onPickImage={handlePickIdImage}
-          onRemoveImage={() => handlePickIdImage(false)}
-        />
+        {/* Solo personas físicas deben subir foto de identificación */}
+        {personType !== "juridica" && (
+          <RegisterIdUploadCard
+            identificationImage={identificationImage}
+            onPickImage={handlePickIdImage}
+            onRemoveImage={() => handlePickIdImage(false)}
+          />
+        )}
 
-        {/* Tipo de Usuario */}
-        <Controller
-          control={control}
-          name="userType"
-          render={({ field: { value, onChange } }) => (
-            <CustomPickerModal
-              label="Tipo de usuario"
-              selectedValue={value}
-              onValueChange={onChange}
-              options={[
-                { label: "Cliente", value: "client" },
-                { label: "Conductor", value: "driver" },
-              ]}
+        {/* Las empresas son exclusivamente Clientes; solo personas físicas eligen rol */}
+        {personType !== "juridica" && (
+          <>
+            <Controller
+              control={control}
+              name="userType"
+              render={({ field: { value, onChange } }) => (
+                <CustomPickerModal
+                  label="Tipo de usuario"
+                  selectedValue={value}
+                  onValueChange={onChange}
+                  options={[
+                    { label: "Cliente", value: "client" },
+                    { label: "Conductor", value: "driver" },
+                  ]}
+                />
+              )}
             />
-          )}
-        />
-        {errors.userType && (
-          <Text style={styles.error}>{errors.userType.message}</Text>
+            {errors.userType && (
+              <Text style={styles.error}>{errors.userType.message}</Text>
+            )}
+          </>
         )}
 
         {/* Direcciones si es CLIENTE */}

@@ -6,7 +6,7 @@ import { AuthContext } from "@/context/authContext";
 import { useAlert } from "@/context/alertContext";
 import { useLoading } from "@/context/loadingContext";
 import { createUserAccount } from "@/services/userService";
-import { lookupCedula } from "@/services/authService";
+import { lookupCedula, lookupRnc } from "@/services/authService";
 import { RegisterFormData } from "@/types/users";
 import { registerSchema } from "@/validations/registerSchema";
 import { pickAndCompressImage } from "@/utils/imageUtils";
@@ -58,6 +58,55 @@ export const useRegister = () => {
   const personType = watch("personType") || "fisica";
   const identificationType = watch("identificationType");
   const [isLookingUpCedula, setIsLookingUpCedula] = useState(false);
+  const [isLookingUpRnc, setIsLookingUpRnc] = useState(false);
+
+  const handleLookupRnc = async () => {
+    const rawRnc = watch("companyRnc") || "";
+    const cleanRnc = rawRnc.replace(/[^0-9]/g, "");
+
+    if (cleanRnc.length !== 9 && cleanRnc.length !== 11) {
+      showAlert({
+        message: "Ingresa un RNC válido de 9 u 11 dígitos numéricos.",
+        type: "warning",
+      });
+      return;
+    }
+
+    setIsLookingUpRnc(true);
+    show();
+    try {
+      const response = await lookupRnc(cleanRnc);
+      if (response?.data?.success && response?.data?.identity) {
+        const { name, commercialName, status } = response.data.identity;
+        const resolvedName = name || commercialName || "";
+        setValue("companyName", resolvedName, { shouldValidate: true });
+        setValue("names", resolvedName, { shouldValidate: false });
+        setValue("lastNames", "", { shouldValidate: false });
+        setValue("identification", cleanRnc, { shouldValidate: false });
+        setValue("identificationType", "RNC", { shouldValidate: false });
+        showAlert({
+          message: `Empresa encontrada: ${resolvedName} (${status || "ACTIVO"})`,
+          type: "success",
+        });
+      } else {
+        showAlert({
+          message:
+            response?.data?.message ||
+            response?.message ||
+            "No se encontraron datos para el RNC en la DGII.",
+          type: "warning",
+        });
+      }
+    } catch (err: any) {
+      showAlert({
+        message: err?.message || "Error al consultar el RNC en la DGII.",
+        type: "error",
+      });
+    } finally {
+      setIsLookingUpRnc(false);
+      hide();
+    }
+  };
 
   const handleLookupCedula = async () => {
     const rawId = watch("identification") || "";
@@ -147,7 +196,9 @@ export const useRegister = () => {
       return;
     }
 
-    if (!identificationImage) {
+    const isEmpresa = data.personType === "juridica";
+
+    if (!identificationImage && !isEmpresa) {
       showAlert({
         message: "Debes adjuntar la foto de tu cédula o pasaporte para la verificación de cuenta por el administrador.",
         type: "warning",
@@ -157,10 +208,17 @@ export const useRegister = () => {
 
     const payload: any = {
       ...data,
-      identificationImage,
+      identificationImage: identificationImage || undefined,
     };
 
-    if (payload.userType !== "driver") {
+    if (isEmpresa) {
+      payload.userType = "client";
+      payload.identificationType = "RNC";
+      payload.identification = data.companyRnc || "";
+      payload.names = data.companyName || "";
+      payload.lastNames = "";
+      delete payload.vehicle;
+    } else if (payload.userType !== "driver") {
       delete payload.vehicle;
     }
     if (payload.userType === "driver" && (!payload.addresses || payload.addresses.length === 0)) {
@@ -238,6 +296,8 @@ export const useRegister = () => {
     setAcceptedTerms,
     handleLookupCedula,
     isLookingUpCedula,
+    handleLookupRnc,
+    isLookingUpRnc,
     identificationType,
     personType,
   };

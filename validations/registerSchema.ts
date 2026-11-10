@@ -36,22 +36,30 @@ export const registerSchema = yup.object({
       schema.required("El nombre comercial o razón social es obligatorio"),
     otherwise: (schema) => schema.optional(),
   }),
-  identificationType: yup.string().required("Tipo de documento requerido"),
-  identification: yup
-    .string()
-    .required("Número de identificación requerido")
-    .test(
-      "is-valid-document",
-      "El número de cédula debe contener exactamente 11 dígitos numéricos",
-      function (value) {
-        if (!value) return false;
-        const type = (this.parent.identificationType || "").toLowerCase();
-        if (type.includes("cedul")) {
-          return isValidCedula(value);
-        }
-        return isValidPassport(value);
-      }
-    ),
+  identificationType: yup.string().when("personType", {
+    is: "juridica",
+    then: (schema) => schema.optional().default("RNC"),
+    otherwise: (schema) => schema.required("Tipo de documento requerido"),
+  }),
+  identification: yup.string().when("personType", {
+    is: "juridica",
+    then: (schema) => schema.optional(),
+    otherwise: (schema) =>
+      schema
+        .required("Número de identificación requerido")
+        .test(
+          "is-valid-document",
+          "El número de cédula debe contener exactamente 11 dígitos numéricos",
+          function (value) {
+            if (!value) return false;
+            const type = (this.parent.identificationType || "").toLowerCase();
+            if (type.includes("cedul")) {
+              return isValidCedula(value);
+            }
+            return isValidPassport(value);
+          }
+        ),
+  }),
   email: yup
     .string()
     .required("El correo electrónico es obligatorio")
@@ -64,26 +72,45 @@ export const registerSchema = yup.object({
     .string()
     .oneOf([yup.ref("password")], "Las contraseñas no coinciden")
     .required("Debe confirmar la contraseña"),
-  names: yup
-    .string()
-    .required("Los nombres son requeridos")
-    .test(
-      "no-numbers-or-binary-names",
-      "Los nombres no pueden contener números ni caracteres binarios",
-      validateNameNoNumbersOrBinary
-    ),
-  lastNames: yup
-    .string()
-    .required("Los apellidos son requeridos")
-    .test(
-      "no-numbers-or-binary-lastnames",
-      "Los apellidos no pueden contener números ni caracteres binarios",
-      validateNameNoNumbersOrBinary
-    ),
-  phone: yup
-    .string()
-    .required("Teléfono requerido")
-    .matches(/^8[0249]\d{8}$/, "Número de teléfono inválido (ej. 809..., 829..., 849...)"),
+  names: yup.string().when("personType", {
+    is: "juridica",
+    then: (schema) => schema.optional(),
+    otherwise: (schema) =>
+      schema
+        .required("Los nombres son requeridos")
+        .test(
+          "no-numbers-or-binary-names",
+          "Los nombres no pueden contener números ni caracteres binarios",
+          validateNameNoNumbersOrBinary
+        ),
+  }),
+  lastNames: yup.string().when("personType", {
+    is: "juridica",
+    then: (schema) => schema.optional(),
+    otherwise: (schema) =>
+      schema
+        .required("Los apellidos son requeridos")
+        .test(
+          "no-numbers-or-binary-lastnames",
+          "Los apellidos no pueden contener números ni caracteres binarios",
+          validateNameNoNumbersOrBinary
+        ),
+  }),
+  phone: yup.string().when("personType", {
+    is: "juridica",
+    then: (schema) =>
+      schema
+        .optional()
+        .transform((val) => (!val ? "" : val))
+        .test("phone-optional-format", "Número de teléfono inválido (ej. 809..., 829..., 849...)", (val) => {
+          if (!val || val.trim() === "") return true;
+          return /^8[0249]\d{8}$/.test(val);
+        }),
+    otherwise: (schema) =>
+      schema
+        .required("Teléfono requerido")
+        .matches(/^8[0249]\d{8}$/, "Número de teléfono inválido (ej. 809..., 829..., 849...)"),
+  }),
   userType: yup.string().required("Tipo de usuario requerido"),
 
   addresses: yup.array().when("userType", {
