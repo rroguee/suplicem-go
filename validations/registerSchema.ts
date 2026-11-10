@@ -17,6 +17,11 @@ const validateNameNoNumbersOrBinary = (value: string | undefined) => {
 };
 
 export const registerSchema = yup.object({
+  registerMethod: yup
+    .string()
+    .oneOf(["email", "phone"])
+    .default("email")
+    .required(),
   personType: yup.string().oneOf(["fisica", "juridica"]).default("fisica"),
   companyRnc: yup.string().when("personType", {
     is: "juridica",
@@ -60,18 +65,34 @@ export const registerSchema = yup.object({
           }
         ),
   }),
-  email: yup
-    .string()
-    .required("El correo electrónico es obligatorio")
-    .email("Correo electrónico no válido"),
-  password: yup
-    .string()
-    .required("Contraseña requerida")
-    .min(6, "La contraseña debe tener al menos 6 caracteres"),
-  confirmPassword: yup
-    .string()
-    .oneOf([yup.ref("password")], "Las contraseñas no coinciden")
-    .required("Debe confirmar la contraseña"),
+  email: yup.string().when("registerMethod", {
+    is: "phone",
+    then: (schema) =>
+      schema
+        .transform((value) => (value === "" ? undefined : value))
+        .email("Correo electrónico no válido")
+        .optional(),
+    otherwise: (schema) =>
+      schema
+        .required("El correo electrónico es obligatorio")
+        .email("Correo electrónico no válido"),
+  }),
+  password: yup.string().when("registerMethod", {
+    is: "phone",
+    then: (schema) => schema.optional(),
+    otherwise: (schema) =>
+      schema
+        .required("Contraseña requerida")
+        .min(6, "La contraseña debe tener al menos 6 caracteres"),
+  }),
+  confirmPassword: yup.string().when("registerMethod", {
+    is: "phone",
+    then: (schema) => schema.optional(),
+    otherwise: (schema) =>
+      schema
+        .oneOf([yup.ref("password")], "Las contraseñas no coinciden")
+        .required("Debe confirmar la contraseña"),
+  }),
   names: yup.string().when("personType", {
     is: "juridica",
     then: (schema) => schema.optional(),

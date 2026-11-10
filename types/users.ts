@@ -47,4 +47,5 @@ export type User = {
 export interface RegisterFormData extends User {
   password: string;
   confirmPassword: string;
+  registerMethod: "email" | "phone";
 }

@@ -15,6 +15,7 @@ interface RegisterPersonalFieldsProps {
   identificationType?: string;
   personType?: "fisica" | "juridica";
   onPersonTypeChange?: (type: "fisica" | "juridica") => void;
+  registerMethod?: "email" | "phone";
 }
 
 export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
@@ -27,6 +28,7 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
   identificationType = "Cedula",
   personType = "fisica",
   onPersonTypeChange,
+  registerMethod = "email",
 }) => {
   return (
     <View>
@@ -190,55 +192,59 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
         </>
       )}
 
-      <Controller
-        control={control}
-        name="email"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Correo electrónico"
-            placeholderTextColor="#999"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={value}
-            onChangeText={onChange}
+      {registerMethod !== "phone" && (
+        <>
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Correo electrónico"
+                placeholderTextColor="#999"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
           />
-        )}
-      />
-      {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
+          {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
 
-      <Controller
-        control={control}
-        name="password"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Contraseña"
-            placeholderTextColor="#999"
-            secureTextEntry
-            value={value}
-            onChangeText={onChange}
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Contraseña"
+                placeholderTextColor="#999"
+                secureTextEntry
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
           />
-        )}
-      />
-      {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
+          {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
 
-      <Controller
-        control={control}
-        name="confirmPassword"
-        render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmar contraseña"
-            placeholderTextColor="#999"
-            secureTextEntry
-            value={value}
-            onChangeText={onChange}
+          <Controller
+            control={control}
+            name="confirmPassword"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Confirmar contraseña"
+                placeholderTextColor="#999"
+                secureTextEntry
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
           />
-        )}
-      />
-      {errors.confirmPassword && (
-        <Text style={styles.error}>{errors.confirmPassword.message}</Text>
+          {errors.confirmPassword && (
+            <Text style={styles.error}>{errors.confirmPassword.message}</Text>
+          )}
+        </>
       )}
 
       {/* Nombres y Apellidos (solo si es Persona Física) */}

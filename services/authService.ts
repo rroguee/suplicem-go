@@ -5,12 +5,19 @@ export const login = async (email: string, password: string) => {
   return await safeRequest(() => api.post("/auth/login", { email, password }));
 };
 
-export const requestPhoneOtp = async (phone: string) => {
-  return await safeRequest(() => api.post("/auth/otp/request", { phone }));
+export const requestPhoneOtp = async (
+  phone: string,
+  purpose: "login" | "register" = "login"
+) => {
+  return await safeRequest(() => api.post("/auth/otp/request", { phone, purpose }));
 };
 
 export const verifyPhoneOtp = async (phone: string, code: string) => {
   return await safeRequest(() => api.post("/auth/otp/verify", { phone, code }));
+};
+
+export const registerWithPhone = async (payload: Record<string, any>) => {
+  return await safeRequest(() => api.post("/auth/register-phone", payload));
 };
 
 export const recoverPassword = async (email: string) => {
