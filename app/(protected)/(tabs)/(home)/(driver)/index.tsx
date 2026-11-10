@@ -8,7 +8,9 @@ import {
   getDriverActualTrips,
   getTripAvailable,
   getTripDetail,
+  updateTripStatus,
 } from "@/services/tripsService";
+import { CancelTripModal } from "@/features/admin-trips/components/CancelTripModal";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useContext, useMemo, useState } from "react";
@@ -59,6 +61,58 @@ const DriverHomeScreen = () => {
     (activeTrip && activeTrip.status !== "assigned") ||
     (contextTrip && contextTrip.status !== "assigned")
   );
+
+  const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [tripToReject, setTripToReject] = useState<any>(null);
+  const [isSubmittingReject, setIsSubmittingReject] = useState(false);
+
+  const handleOpenRejectModal = (trip: any) => {
+    setTripToReject(trip);
+    setRejectReason("");
+    setIsRejectModalVisible(true);
+  };
+
+  const handleConfirmReject = async () => {
+    if (!tripToReject?.id) return;
+    if (rejectReason.trim().length < 5) {
+      showAlert({
+        message: "El motivo del rechazo debe tener al menos 5 caracteres.",
+        type: "warning",
+      });
+      return;
+    }
+
+    setIsSubmittingReject(true);
+    show();
+    try {
+      const res = await updateTripStatus(tripToReject.id, "canceled", rejectReason.trim());
+      if (res?.success) {
+        setIsRejectModalVisible(false);
+        setTripToReject(null);
+        setRejectReason("");
+        showAlert({
+          message: "Has rechazado el viaje. Se ha notificado al Administrador para su reasignación.",
+          type: "success",
+        });
+        await fetchTrips();
+        await validateTrips();
+      } else {
+        showAlert({
+          message: res?.message || "No se pudo rechazar el viaje.",
+          type: "error",
+        });
+      }
+    } catch (err: any) {
+      showAlert({
+        message: err?.message || "Error al rechazar el viaje.",
+        type: "error",
+      });
+    } finally {
+      setIsSubmittingReject(false);
+      hide();
+    }
+  };
 
   // Contadores dinámicos para los chips de filtro
   const tripCounts = useMemo(() => {
@@ -265,58 +319,50 @@ const DriverHomeScreen = () => {
             </View>
           </View>
 
-          {currTrip.status === "assigned" ? (
-            <TouchableOpacity
-              style={[styles.continueTripButton, { backgroundColor: "#16A34A" }]}
-              activeOpacity={0.85}
-              onPress={async () => {
-                try {
-                  show();
-                  const res = await aceptedTrip(currTrip.id);
-                  if (res?.success) {
-                    const fullTrip = { ...currTrip, status: "accepted" };
-                    saveTrip(fullTrip);
-                    setActiveTrip(fullTrip);
-                    router.push("/driver-order");
-                  } else {
-                    showAlert({
-                      message: res?.message || "No se pudo aceptar el viaje.",
-                      type: "error",
-                    });
-                  }
-                } catch (error: any) {
-                  showAlert({
-                    message: error?.message || "Error al aceptar el viaje.",
-                    type: "error",
-                  });
-                } finally {
-                  hide();
-                }
-              }}
-            >
-              <Text style={styles.continueTripButtonText}>Aceptar Viaje</Text>
-              <Ionicons name="checkmark-circle" size={18} color="#fff" />
-            </TouchableOpacity>
-          ) : (
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
             <TouchableOpacity
               style={[
                 styles.continueTripButton,
-                currTrip.status === "accepted" && { backgroundColor: "#2563EB" },
+                { flex: 1.5, backgroundColor: "#2563EB", marginTop: 0 },
               ]}
               activeOpacity={0.85}
               onPress={() => {
-                saveTrip(currTrip);
+                saveTrip({ ...currTrip, status: "accepted" } as any);
                 router.push("/driver-order");
               }}
             >
               <Text style={styles.continueTripButtonText}>
-                {currTrip.status === "accepted"
-                  ? "Ir al viaje para iniciar ruta"
-                  : "Ver detalle del viaje en curso"}
+                {currTrip.status === "started" || currTrip.status === "in_progress"
+                  ? "Ver viaje en curso"
+                  : "Ir a iniciar ruta"}
               </Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
-          )}
+
+            {currTrip.status !== "started" && currTrip.status !== "in_progress" && (
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  backgroundColor: "#FEF2F2",
+                  borderWidth: 1,
+                  borderColor: "#EF4444",
+                  borderRadius: 10,
+                  paddingHorizontal: 12,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flexDirection: "row",
+                  gap: 4,
+                }}
+                activeOpacity={0.85}
+                onPress={() => handleOpenRejectModal(currTrip)}
+              >
+                <Ionicons name="close-circle-outline" size={18} color="#DC2626" />
+                <Text style={{ color: "#DC2626", fontWeight: "bold", fontSize: 13 }}>
+                  Rechazar
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       ))}
 
@@ -341,15 +387,9 @@ const DriverHomeScreen = () => {
           <View key={trip.id} style={styles.card}>
             <View style={styles.cardHeaderRow}>
               <Text style={styles.label}>Viaje: {trip.tripNumber}</Text>
-              {trip.status === "assigned" || (trip.assignedDriverId && (!currentUserId || trip.assignedDriverId === currentUserId)) ? (
-                <View style={styles.assignedBadge}>
-                  <Text style={styles.assignedBadgeText}>🎯 Asignado para ti</Text>
-                </View>
-              ) : (
-                <View style={styles.generalBadge}>
-                  <Text style={styles.generalBadgeText}>Disponible</Text>
-                </View>
-              )}
+              <View style={[styles.assignedBadge, { backgroundColor: "#DBEAFE", borderColor: "#2563EB" }]}>
+                <Text style={[styles.assignedBadgeText, { color: "#1D4ED8" }]}>✓ Aceptado</Text>
+              </View>
             </View>
 
             <View style={styles.infoRow}>
@@ -375,43 +415,35 @@ const DriverHomeScreen = () => {
 
             <View style={styles.cardActionsRow}>
               <TouchableOpacity
-                style={styles.acceptCardButton}
+                style={[styles.acceptCardButton, { backgroundColor: "#2563EB" }]}
                 activeOpacity={0.8}
-                onPress={async () => {
-                  try {
-                    show();
-                    const res = await aceptedTrip(trip.id);
-                    if (res?.success) {
-                      const detailRes = await getTripDetail(trip.id);
-                      const fullTrip =
-                        detailRes?.success && detailRes?.trip
-                          ? detailRes.trip
-                          : { ...trip, status: "accepted" };
-                      saveTrip({ ...fullTrip, status: "accepted" } as any);
-                      router.push("/driver-order");
-                    } else {
-                      showAlert({
-                        message: res?.message || "No se pudo aceptar el viaje.",
-                        type: "error",
-                      });
-                    }
-                  } catch (error: any) {
-                    showAlert({
-                      message: error?.message || "Error al aceptar el viaje.",
-                      type: "error",
-                    });
-                  } finally {
-                    hide();
-                  }
+                onPress={() => {
+                  saveTrip({ ...trip, status: "accepted" } as any);
+                  router.push("/driver-order");
                 }}
               >
                 <Ionicons
-                  name="checkmark-circle"
+                  name="navigate-outline"
                   size={18}
                   color="#fff"
                 />
                 <Text style={styles.buttonText}>
-                  Aceptar Viaje
+                  Iniciar Ruta
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.rejectCardButton}
+                activeOpacity={0.8}
+                onPress={() => handleOpenRejectModal(trip)}
+              >
+                <Ionicons
+                  name="close-circle-outline"
+                  size={18}
+                  color="#DC2626"
+                />
+                <Text style={styles.rejectButtonText}>
+                  Rechazar
                 </Text>
               </TouchableOpacity>
 
@@ -431,7 +463,7 @@ const DriverHomeScreen = () => {
                   color="#0F294A"
                 />
                 <Text style={styles.detailButtonText}>
-                  Ver Detalle
+                  Detalle
                 </Text>
               </TouchableOpacity>
             </View>
@@ -455,6 +487,20 @@ const DriverHomeScreen = () => {
       ) : (
         <NoTripsMessage />
       )}
+
+      {/* Modal para motivo obligatorio de rechazo */}
+      <CancelTripModal
+        visible={isRejectModalVisible}
+        reason={rejectReason}
+        onReasonChange={setRejectReason}
+        onConfirm={handleConfirmReject}
+        onCancel={() => {
+          setIsRejectModalVisible(false);
+          setTripToReject(null);
+          setRejectReason("");
+        }}
+        isSubmitting={isSubmittingReject}
+      />
     </ScrollView>
   );
 };
@@ -683,13 +729,30 @@ const styles = StyleSheet.create({
   },
   acceptCardButton: {
     flex: 1.2,
-    backgroundColor: "#16A34A",
+    backgroundColor: "#2563EB",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
     paddingVertical: 12,
     borderRadius: 10,
+  },
+  rejectCardButton: {
+    flex: 1,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#EF4444",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  rejectButtonText: {
+    color: "#DC2626",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   detailCardButton: {
     flex: 1,
