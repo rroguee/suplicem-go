@@ -1,17 +1,24 @@
 import React from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Control, Controller, FieldErrors } from "react-hook-form";
+import { Ionicons } from "@expo/vector-icons";
 import CustomPickerModal from "@/components/CustomPickerModal";
 import { RegisterFormData } from "@/types/users";
 
 interface RegisterPersonalFieldsProps {
   control: Control<RegisterFormData>;
   errors: FieldErrors<RegisterFormData>;
+  onLookupCedula?: () => void;
+  isLookingUpCedula?: boolean;
+  identificationType?: string;
 }
 
 export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
   control,
   errors,
+  onLookupCedula,
+  isLookingUpCedula,
+  identificationType = "Cedula",
 }) => {
   return (
     <View>
@@ -47,6 +54,25 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
       />
       {errors.identification && (
         <Text style={styles.error}>{errors.identification.message}</Text>
+      )}
+
+      {identificationType === "Cedula" && onLookupCedula && (
+        <TouchableOpacity
+          style={styles.lookupButton}
+          onPress={onLookupCedula}
+          disabled={isLookingUpCedula}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="search-outline"
+            size={16}
+            color="#E31E24"
+            style={{ marginRight: 6 }}
+          />
+          <Text style={styles.lookupButtonText}>
+            {isLookingUpCedula ? "Consultando en JCE..." : "Consultar Cédula (JCE)"}
+          </Text>
+        </TouchableOpacity>
       )}
 
       <Controller
@@ -164,5 +190,21 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 12,
     marginBottom: 8,
+  },
+  lookupButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEE2E2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  lookupButtonText: {
+    color: "#E31E24",
+    fontSize: 13,
+    fontWeight: "bold",
   },
 });

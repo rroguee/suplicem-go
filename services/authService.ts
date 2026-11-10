@@ -34,3 +34,7 @@ export const resendVerificationEmail = async (email: string, idToken?: string) =
     api.post("/auth/resend-verification", { email, idToken })
   );
 };
+
+export const lookupCedula = async (cedula: string) => {
+  return await safeRequest(() => api.get(`/identity/cedula/${cedula}`));
+};

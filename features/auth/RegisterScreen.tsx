@@ -37,6 +37,9 @@ export const RegisterScreen: React.FC = () => {
     onSubmit,
     acceptedTerms,
     setAcceptedTerms,
+    handleLookupCedula,
+    isLookingUpCedula,
+    identificationType,
   } = useRegister();
 
   return (
@@ -52,7 +55,13 @@ export const RegisterScreen: React.FC = () => {
           resizeMode="contain"
         />
 
-        <RegisterPersonalFields control={control} errors={errors} />
+        <RegisterPersonalFields
+          control={control}
+          errors={errors}
+          onLookupCedula={handleLookupCedula}
+          isLookingUpCedula={isLookingUpCedula}
+          identificationType={identificationType}
+        />
 
         <RegisterIdUploadCard
           identificationImage={identificationImage}
