@@ -215,7 +215,7 @@ const UserRequestsScreen: React.FC = () => {
                     </View>
                   </TouchableOpacity>
                 </View>
-              ) : (
+              ) : (user as any).personType === "juridica" || (user as any).companyRnc ? null : (
                 <View style={styles.noPhotoContainer}>
                   <Ionicons name="image-outline" size={20} color="#94A3B8" />
                   <Text style={styles.noPhotoText}>Sin foto de cédula adjunta</Text>
