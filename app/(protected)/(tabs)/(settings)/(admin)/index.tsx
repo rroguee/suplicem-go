@@ -107,6 +107,14 @@ const AdminSettingsMainScreen: React.FC = () => {
           subtitle="Cuentas receptoras para transferencias"
           onPress={() => router.push("/(protected)/(tabs)/(settings)/(admin)/bank-accounts-screen" as any)}
         />
+        <SettingsMenuRow
+          icon="headset-outline"
+          iconColor="#166534"
+          iconBgColor="#DCFCE7"
+          title="Información de Soporte"
+          subtitle="Canales de contacto y horarios"
+          onPress={() => router.push("/(protected)/(tabs)/(settings)/(admin)/support-config-screen" as any)}
+        />
       </SettingsMenuCard>
 
       {/* Cerrar Sesión */}

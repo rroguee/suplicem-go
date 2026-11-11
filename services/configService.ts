@@ -69,3 +69,36 @@ export const deleteBankAccount = async (
     ? { success: true }
     : { success: false, message: result.message };
 };
+
+export interface SupportConfig {
+  whatsapp: string;
+  whatsappMessage: string;
+  phone: string;
+  email: string;
+  scheduleWeekday: string;
+  scheduleSaturday: string;
+  scheduleSunday: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export type SupportConfigPayload = Omit<SupportConfig, "updatedAt" | "updatedBy">;
+
+export const getSupportConfig = async (): Promise<SupportConfig | null> => {
+  const result = await safeRequest(() => protectedApi.get("/config/support"));
+  if (result.success && result.data?.data) {
+    return result.data.data as SupportConfig;
+  }
+  return null;
+};
+
+export const updateSupportConfig = async (
+  payload: SupportConfigPayload
+): Promise<{ success: boolean; message?: string }> => {
+  const result = await safeRequest(() =>
+    protectedApi.put("/config/support", payload)
+  );
+  return result.success
+    ? { success: true }
+    : { success: false, message: result.message };
+};

@@ -44,6 +44,10 @@ export default function ClientSettingsLayout() {
         name="bank-accounts-screen"
         options={{ title: "Cuentas Bancarias", headerShown: false }}
       />
+      <Stack.Screen
+        name="support-config-screen"
+        options={{ title: "Información de Soporte", headerShown: false }}
+      />
     </Stack>
   );
 }
