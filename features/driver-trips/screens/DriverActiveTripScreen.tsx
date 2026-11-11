@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { InfoRow } from "@/components/InfoRow";
@@ -12,7 +12,7 @@ import { TripExecutionModals } from "../components/TripExecutionModals";
 import { DeliveryPinModal } from "../components/DeliveryPinModal";
 
 export const DriverActiveTripScreen: React.FC = () => {
-  const { supportConfig } = useSupportConfig();
+  const { supportConfig, refreshSupport } = useSupportConfig();
   const {
     trip,
     location,
@@ -34,6 +34,12 @@ export const DriverActiveTripScreen: React.FC = () => {
     setIsCancelModalVisible,
     setIsDeliveryModalVisible,
   } = useActiveTripExecution();
+
+  useEffect(() => {
+    if (isPinModalVisible) {
+      refreshSupport();
+    }
+  }, [isPinModalVisible, refreshSupport]);
 
   return (
     <ScrollView

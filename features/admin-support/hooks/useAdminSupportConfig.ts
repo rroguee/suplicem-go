@@ -21,21 +21,19 @@ export const useAdminSupportConfig = () => {
     try {
       show();
       const data = await getSupportConfig();
-      if (data) {
-        setForm({
-          whatsapp: data.whatsapp || "",
-          whatsappMessage: data.whatsappMessage || "",
-          phone: data.phone || "",
-          email: data.email || "",
-          scheduleWeekday: data.scheduleWeekday || "",
-          scheduleSaturday: data.scheduleSaturday || "",
-          scheduleSunday: data.scheduleSunday || "",
-        });
-      }
-    } catch (error) {
+      setForm({
+        whatsapp: data.whatsapp || "",
+        whatsappMessage: data.whatsappMessage || "",
+        phone: data.phone || "",
+        email: data.email || "",
+        scheduleWeekday: data.scheduleWeekday || "",
+        scheduleSaturday: data.scheduleSaturday || "",
+        scheduleSunday: data.scheduleSunday || "",
+      });
+    } catch (error: any) {
       console.error("[AdminSupport] Error al cargar:", error);
       showAlert({
-        message: "No se pudo cargar la configuración de soporte.",
+        message: error?.message || "No se pudo cargar la configuración de soporte.",
         type: "error",
       });
     } finally {
