@@ -18,6 +18,8 @@ import { RegisterIdUploadCard } from "./components/RegisterIdUploadCard";
 import { RegisterPersonalFields } from "./components/RegisterPersonalFields";
 import { RegisterAddressSection } from "./components/RegisterAddressSection";
 import { RegisterDriverFields } from "./components/RegisterDriverFields";
+import { RegisterAccountTypeFields } from "./components/RegisterAccountTypeFields";
+import { PhoneCodeModal } from "./components/PhoneCodeModal";
 import { Ionicons } from "@expo/vector-icons";
 
 export const RegisterScreen: React.FC = () => {
@@ -43,6 +45,8 @@ export const RegisterScreen: React.FC = () => {
     isLookingUpRnc,
     identificationType,
     personType,
+    registerMethod,
+    phoneRegistration,
   } = useRegister();
 
   return (
@@ -58,6 +62,11 @@ export const RegisterScreen: React.FC = () => {
           resizeMode="contain"
         />
 
+        <RegisterAccountTypeFields
+          control={control}
+          registerMethod={registerMethod}
+        />
+
         <RegisterPersonalFields
           control={control}
           errors={errors}
@@ -67,6 +76,7 @@ export const RegisterScreen: React.FC = () => {
           isLookingUpRnc={isLookingUpRnc}
           identificationType={identificationType}
           personType={personType}
+          registerMethod={registerMethod}
           onPersonTypeChange={(type) => {
             setValue("personType", type);
             if (type === "juridica") {
@@ -77,7 +87,7 @@ export const RegisterScreen: React.FC = () => {
         />
 
         {/* Solo personas físicas deben subir foto de identificación */}
-        {personType !== "juridica" && (
+        {personType !== "juridica" && registerMethod !== "phone" && (
           <RegisterIdUploadCard
             identificationImage={identificationImage}
             onPickImage={handlePickIdImage}
@@ -163,8 +173,22 @@ export const RegisterScreen: React.FC = () => {
           void handleSubmit(onSubmit)();
         }}
       >
-        <Text style={styles.buttonText}>Registrarse</Text>
+        <Text style={styles.buttonText}>
+          {registerMethod === "phone"
+            ? "Enviar código y registrarme"
+            : "Registrarse"}
+        </Text>
       </TouchableOpacity>
+
+      <PhoneCodeModal
+        visible={phoneRegistration.visible}
+        phone={phoneRegistration.phone}
+        code={phoneRegistration.code}
+        onChangeCode={phoneRegistration.setCode}
+        isSubmitting={phoneRegistration.isSubmitting}
+        onConfirm={phoneRegistration.confirm}
+        onClose={phoneRegistration.close}
+      />
       </ScrollView>
     </KeyboardAvoidingView>
   );

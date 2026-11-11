@@ -1,7 +1,9 @@
 import React from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -39,7 +41,10 @@ export const PhoneLoginModal: React.FC<PhoneLoginModalProps> = ({
 }) => {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.title}>
@@ -112,7 +117,7 @@ export const PhoneLoginModal: React.FC<PhoneLoginModalProps> = ({
             </>
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
