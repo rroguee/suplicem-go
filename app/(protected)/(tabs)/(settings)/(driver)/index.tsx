@@ -14,8 +14,11 @@ import { updateDriverProfile } from "@/services/userService";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import {
   SettingsProfileCard,
+  SettingsMenuCard,
+  SettingsMenuRow,
   SettingsLogoutButton,
   SettingsInfoRow,
+  SupportContactModal,
 } from "@/components/settings";
 import { AdminUserVehicleFields } from "@/features/admin-users/components/AdminUserVehicleFields";
 import { DRIVER_VEHICLE_TON_OPTIONS } from "@/constants/cartConstants";
@@ -26,6 +29,7 @@ const DriverSettingsMainScreen: React.FC = () => {
   const { showAlert } = useAlert();
   const { show, hide } = useLoading();
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+  const [isSupportModalVisible, setIsSupportModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   const [phone, setPhone] = useState(user?.phone || "");
@@ -265,10 +269,29 @@ const DriverSettingsMainScreen: React.FC = () => {
         )}
       </View>
 
+      {/* Soporte y Asistencia */}
+      {!isEditing && (
+        <SettingsMenuCard>
+          <SettingsMenuRow
+            icon="headset-outline"
+            iconColor="#166534"
+            iconBgColor="#DCFCE7"
+            title="Soporte y Asistencia"
+            subtitle="Canales de contacto y horarios"
+            onPress={() => setIsSupportModalVisible(true)}
+          />
+        </SettingsMenuCard>
+      )}
+
       {/* Cerrar Sesión */}
       {!isEditing && (
         <SettingsLogoutButton onPress={() => setIsLogoutModalVisible(true)} />
       )}
+
+      <SupportContactModal
+        visible={isSupportModalVisible}
+        onClose={() => setIsSupportModalVisible(false)}
+      />
 
       <ConfirmationModal
         visible={isLogoutModalVisible}

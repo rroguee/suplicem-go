@@ -6,11 +6,13 @@ import { DriverTripMap } from "@/components/driver/DriverTripMap";
 import { DriverTripOrderCard } from "@/components/driver/DriverTripOrderCard";
 import { TripActionButtons } from "@/components/driver/TripActionButtons";
 import { Palette } from "@/constants/theme";
+import { useSupportConfig } from "@/hooks/useSupportConfig";
 import { useActiveTripExecution } from "../hooks/useActiveTripExecution";
 import { TripExecutionModals } from "../components/TripExecutionModals";
 import { DeliveryPinModal } from "../components/DeliveryPinModal";
 
 export const DriverActiveTripScreen: React.FC = () => {
+  const { supportConfig } = useSupportConfig();
   const {
     trip,
     location,
@@ -103,6 +105,8 @@ export const DriverActiveTripScreen: React.FC = () => {
       <DeliveryPinModal
         visible={isPinModalVisible}
         tripNumber={trip?.tripNumber}
+        supportWhatsapp={supportConfig.whatsapp}
+        supportPhone={supportConfig.phone}
         onConfirm={confirmCompleteWithPin}
         onClose={() => setIsPinModalVisible(false)}
       />

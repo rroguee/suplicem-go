@@ -84,6 +84,16 @@ export interface SupportConfig {
 
 export type SupportConfigPayload = Omit<SupportConfig, "updatedAt" | "updatedBy">;
 
+export const DEFAULT_SUPPORT_CONFIG: SupportConfigPayload = {
+  whatsapp: "18095550199",
+  whatsappMessage: "Hola, necesito asistencia con el sistema Suplicem",
+  phone: "(809) 555-0199",
+  email: "soporte@suplicem.com",
+  scheduleWeekday: "8:00 AM - 6:00 PM",
+  scheduleSaturday: "8:00 AM - 1:00 PM",
+  scheduleSunday: "Guardias de contingencia",
+};
+
 export const getSupportConfig = async (): Promise<SupportConfig | null> => {
   const result = await safeRequest(() => protectedApi.get("/config/support"));
   if (result.success && result.data?.data) {

@@ -3,26 +3,17 @@ import { useFocusEffect } from "expo-router";
 import { useAlert } from "@/context/alertContext";
 import { useLoading } from "@/context/loadingContext";
 import {
+  DEFAULT_SUPPORT_CONFIG,
   getSupportConfig,
   SupportConfigPayload,
   updateSupportConfig,
 } from "@/services/configService";
 
-const DEFAULT_SUPPORT_FORM: SupportConfigPayload = {
-  whatsapp: "18095550199",
-  whatsappMessage: "Hola, necesito asistencia con el sistema Suplicem",
-  phone: "(809) 555-0199",
-  email: "soporte@suplicem.com",
-  scheduleWeekday: "8:00 AM - 6:00 PM",
-  scheduleSaturday: "8:00 AM - 1:00 PM",
-  scheduleSunday: "Guardias de contingencia",
-};
-
 /**
  * Maneja la carga, edición y actualización de la configuración de soporte.
  */
 export const useAdminSupportConfig = () => {
-  const [form, setForm] = useState<SupportConfigPayload>(DEFAULT_SUPPORT_FORM);
+  const [form, setForm] = useState<SupportConfigPayload>(DEFAULT_SUPPORT_CONFIG);
   const { show, hide } = useLoading();
   const { showAlert } = useAlert();
 

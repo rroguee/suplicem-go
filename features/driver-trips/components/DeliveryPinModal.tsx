@@ -18,6 +18,8 @@ interface DeliveryPinModalProps {
   onConfirm: (pin: string) => void;
   onClose: () => void;
   adminPhone?: string;
+  supportWhatsapp?: string;
+  supportPhone?: string;
 }
 
 export const DeliveryPinModal: React.FC<DeliveryPinModalProps> = ({
@@ -26,6 +28,8 @@ export const DeliveryPinModal: React.FC<DeliveryPinModalProps> = ({
   onConfirm,
   onClose,
   adminPhone = "18095550199",
+  supportWhatsapp,
+  supportPhone,
 }) => {
   const [pin, setPin] = useState("");
 
@@ -39,7 +43,11 @@ export const DeliveryPinModal: React.FC<DeliveryPinModalProps> = ({
   };
 
   const handleContactAdmin = (channel: "whatsapp" | "call") => {
-    const cleanPhone = adminPhone.replace(/[^\d+]/g, "");
+    const rawTarget =
+      channel === "call"
+        ? supportPhone || adminPhone
+        : supportWhatsapp || adminPhone;
+    const cleanPhone = rawTarget.replace(/[^\d+]/g, "");
     if (channel === "call") {
       Linking.openURL(`tel:${cleanPhone}`);
     } else {

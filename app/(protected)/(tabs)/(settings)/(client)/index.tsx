@@ -18,8 +18,11 @@ import { LegalSectionCard } from "@/components/profile/LegalSectionCard";
 import { TermsAndConditionsModal } from "@/components/profile/TermsAndConditionsModal";
 import {
   SettingsProfileCard,
+  SettingsMenuCard,
+  SettingsMenuRow,
   SettingsLogoutButton,
   SettingsInfoRow,
+  SupportContactModal,
 } from "@/components/settings";
 import { Palette } from "@/constants/theme";
 
@@ -29,6 +32,7 @@ const ClientSettingsMainScreen: React.FC = () => {
   const { show, hide } = useLoading();
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const [isTermsModalVisible, setIsTermsModalVisible] = useState(false);
+  const [isSupportModalVisible, setIsSupportModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   const [phone, setPhone] = useState(user?.phone || "");
@@ -161,6 +165,20 @@ const ClientSettingsMainScreen: React.FC = () => {
       {/* Sección Legal */}
       <LegalSectionCard onOpenTerms={() => setIsTermsModalVisible(true)} />
 
+      {/* Soporte y Asistencia */}
+      {!isEditing && (
+        <SettingsMenuCard>
+          <SettingsMenuRow
+            icon="headset-outline"
+            iconColor="#166534"
+            iconBgColor="#DCFCE7"
+            title="Soporte y Asistencia"
+            subtitle="Canales de contacto y horarios"
+            onPress={() => setIsSupportModalVisible(true)}
+          />
+        </SettingsMenuCard>
+      )}
+
       {/* Botones de Acción */}
       <View style={styles.actionButtonsContainer}>
         {isEditing ? (
@@ -198,6 +216,11 @@ const ClientSettingsMainScreen: React.FC = () => {
       <TermsAndConditionsModal
         visible={isTermsModalVisible}
         onClose={() => setIsTermsModalVisible(false)}
+      />
+
+      <SupportContactModal
+        visible={isSupportModalVisible}
+        onClose={() => setIsSupportModalVisible(false)}
       />
 
       <ConfirmationModal

@@ -2,20 +2,20 @@ import React, { useContext, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthContext } from "@/context/authContext";
-import { useAlert } from "@/context/alertContext";
 import {
   SettingsProfileCard,
   SettingsMenuCard,
   SettingsMenuRow,
   SettingsLogoutButton,
   EditAccountModal,
+  SupportContactModal,
 } from "@/components/settings";
 
 export const SellerSettingsScreen: React.FC = () => {
   const { user, logOut, updateUser } = useContext(AuthContext);
-  const { showAlert } = useAlert();
   const router = useRouter();
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isSupportModalVisible, setIsSupportModalVisible] = useState(false);
 
   const fullName = `${user?.names || ""} ${user?.lastNames || ""}`.trim() || "Vendedor Comercial";
   const sellerIdCode =
@@ -78,13 +78,7 @@ export const SellerSettingsScreen: React.FC = () => {
           iconBgColor="#DCFCE7"
           title="Contacto con Administración"
           subtitle="Soporte operativo y logística"
-          onPress={() =>
-            showAlert({
-              message:
-                "Para asistencia o consultas de despacho, comunícate con la central de Suplicem al (809) 555-0199.",
-              type: "info",
-            })
-          }
+          onPress={() => setIsSupportModalVisible(true)}
         />
       </SettingsMenuCard>
 
@@ -96,6 +90,11 @@ export const SellerSettingsScreen: React.FC = () => {
         onClose={() => setIsEditModalVisible(false)}
         user={user}
         onSuccess={updateUser}
+      />
+
+      <SupportContactModal
+        visible={isSupportModalVisible}
+        onClose={() => setIsSupportModalVisible(false)}
       />
     </ScrollView>
   );
