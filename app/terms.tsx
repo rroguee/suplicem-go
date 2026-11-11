@@ -1,7 +1,10 @@
 import React from "react";
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { Linking, ScrollView, StyleSheet, Text } from "react-native";
+import { useSupportConfig } from "@/hooks/useSupportConfig";
 
 const TermsScreen = () => {
+  const { supportConfig } = useSupportConfig();
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Términos de Uso</Text>
@@ -27,7 +30,14 @@ const TermsScreen = () => {
 
       <Text style={styles.subtitle}>4. Contacto</Text>
       <Text style={styles.paragraph}>
-        Si tienes preguntas sobre estos términos, contáctanos a través de nuestro correo de soporte.
+        Si tienes preguntas sobre estos términos, contáctanos a través de nuestro correo de soporte:{" "}
+        <Text
+          style={styles.link}
+          onPress={() => Linking.openURL(`mailto:${supportConfig.email}`)}
+        >
+          {supportConfig.email}
+        </Text>
+        .
       </Text>
     </ScrollView>
   );
@@ -58,5 +68,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: "#333",
+  },
+  link: {
+    color: "#0F294A",
+    fontWeight: "600",
+    textDecorationLine: "underline",
   },
 });

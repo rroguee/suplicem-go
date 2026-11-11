@@ -25,7 +25,7 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
   visible,
   onClose,
 }) => {
-  const { supportConfig, isLoading, refreshSupport } = useSupportConfig(false);
+  const { supportConfig, isLoading, error, refreshSupport } = useSupportConfig(false);
 
   useEffect(() => {
     if (visible) {
@@ -61,6 +61,18 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
 
           {isLoading ? (
             <ActivityIndicator size="small" color={Palette.primaryDark} style={{ marginVertical: 20 }} />
+          ) : null}
+
+          {error && !isLoading ? (
+            <View style={styles.errorBanner}>
+              <Ionicons name="warning-outline" size={18} color="#B45309" />
+              <Text style={styles.errorText}>
+                No se pudo consultar el servidor. Mostrando valores de respaldo.
+              </Text>
+              <TouchableOpacity onPress={refreshSupport}>
+                <Text style={styles.retryText}>Reintentar</Text>
+              </TouchableOpacity>
+            </View>
           ) : null}
 
           <ScrollView showsVerticalScrollIndicator={false}>
@@ -142,4 +154,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   closeBtnText: { fontSize: 14, fontWeight: "600", color: "#334155" },
+  errorBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FEF3C7",
+    borderColor: "#FCD34D",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+  },
+  errorText: { flex: 1, fontSize: 12, color: "#92400E" },
+  retryText: { fontSize: 12, fontWeight: "700", color: "#B45309", textDecorationLine: "underline" },
 });

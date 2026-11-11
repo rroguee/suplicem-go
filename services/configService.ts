@@ -1,3 +1,4 @@
+import api from "./api";
 import { safeRequest } from "./apiSafe";
 import protectedApi from "./protectedApi";
 
@@ -94,12 +95,14 @@ export const DEFAULT_SUPPORT_CONFIG: SupportConfigPayload = {
   scheduleSunday: "Guardias de contingencia",
 };
 
-export const getSupportConfig = async (): Promise<SupportConfig | null> => {
-  const result = await safeRequest(() => protectedApi.get("/config/support"));
+export const getSupportConfig = async (): Promise<SupportConfig> => {
+  const result = await safeRequest(() => api.get("/config/support"));
   if (result.success && result.data?.data) {
     return result.data.data as SupportConfig;
   }
-  return null;
+  throw new Error(
+    result.message || "No se pudo obtener la configuración de soporte."
+  );
 };
 
 export const updateSupportConfig = async (
