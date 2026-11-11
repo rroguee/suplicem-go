@@ -226,3 +226,21 @@ export const assignSellerToClient = async (
     throw error;
   }
 };
+
+export interface UpdateOwnProfilePayload {
+  names: string;
+  lastNames: string;
+  phone: string;
+}
+
+export const updateOwnProfile = async (
+  uid: string,
+  data: UpdateOwnProfilePayload
+): Promise<{ success: boolean; message?: string }> => {
+  const result = await safeRequest(() =>
+    protectedApi.patch("/users/update", { uid, ...data })
+  );
+  return result.success
+    ? { success: true }
+    : { success: false, message: result.message };
+};

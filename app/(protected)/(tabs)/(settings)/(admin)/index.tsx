@@ -8,12 +8,14 @@ import {
   SettingsMenuCard,
   SettingsMenuRow,
   SettingsLogoutButton,
+  EditAccountModal,
 } from "@/components/settings";
 
 const AdminSettingsMainScreen: React.FC = () => {
   const router = useRouter();
-  const { user, logOut } = useContext(AuthContext);
+  const { user, logOut, updateUser } = useContext(AuthContext);
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   const fullName = `${user?.names || ""} ${user?.lastNames || ""}`.trim() || "Administrador";
 
@@ -49,6 +51,14 @@ const AdminSettingsMainScreen: React.FC = () => {
 
       {/* Menú de Gestión y Operaciones */}
       <SettingsMenuCard title="Gestión y Operaciones">
+        <SettingsMenuRow
+          icon="person-circle-outline"
+          iconColor="#0F294A"
+          iconBgColor="#E2E8F0"
+          title="Editar Mi Cuenta"
+          subtitle="Actualiza tu nombre, apellido y teléfono"
+          onPress={() => setIsEditModalVisible(true)}
+        />
         <SettingsMenuRow
           icon="shield-checkmark-outline"
           iconColor="#991B1B"
@@ -110,6 +120,13 @@ const AdminSettingsMainScreen: React.FC = () => {
         onCancel={cancelLogout}
         confirmText="Cerrar Sesión"
         cancelText="Cancelar"
+      />
+
+      <EditAccountModal
+        visible={isEditModalVisible}
+        onClose={() => setIsEditModalVisible(false)}
+        user={user}
+        onSuccess={updateUser}
       />
     </ScrollView>
   );

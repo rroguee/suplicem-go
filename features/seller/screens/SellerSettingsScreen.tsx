@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { AuthContext } from "@/context/authContext";
@@ -8,12 +8,14 @@ import {
   SettingsMenuCard,
   SettingsMenuRow,
   SettingsLogoutButton,
+  EditAccountModal,
 } from "@/components/settings";
 
 export const SellerSettingsScreen: React.FC = () => {
-  const { user, logOut } = useContext(AuthContext);
+  const { user, logOut, updateUser } = useContext(AuthContext);
   const { showAlert } = useAlert();
   const router = useRouter();
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   const fullName = `${user?.names || ""} ${user?.lastNames || ""}`.trim() || "Vendedor Comercial";
   const sellerIdCode =
@@ -55,6 +57,14 @@ export const SellerSettingsScreen: React.FC = () => {
       {/* Gestión Comercial */}
       <SettingsMenuCard title="Gestión Comercial">
         <SettingsMenuRow
+          icon="person-circle-outline"
+          iconColor="#0F294A"
+          iconBgColor="#E2E8F0"
+          title="Editar Mi Cuenta"
+          subtitle="Actualiza tu nombre, apellido y teléfono"
+          onPress={() => setIsEditModalVisible(true)}
+        />
+        <SettingsMenuRow
           icon="person-add-outline"
           iconColor="#0284C7"
           iconBgColor="#E0F2FE"
@@ -80,6 +90,13 @@ export const SellerSettingsScreen: React.FC = () => {
 
       {/* Cerrar Sesión */}
       <SettingsLogoutButton onPress={handleConfirmLogout} />
+
+      <EditAccountModal
+        visible={isEditModalVisible}
+        onClose={() => setIsEditModalVisible(false)}
+        user={user}
+        onSuccess={updateUser}
+      />
     </ScrollView>
   );
 };
