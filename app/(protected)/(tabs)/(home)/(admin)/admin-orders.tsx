@@ -7,9 +7,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
+  FlatList,
   Image,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -79,49 +79,53 @@ const AdminOrdersScreen = () => {
     }, [fetchOrders])
   );
 
-  const handleViewDetails = (orderId: string) => {
-    router.push({
-      pathname: "/admin-order-detail",
-      params: { orderId },
+  const handleViewDetails = useCallback(
+    (orderId: string) => {
+      router.push({
+        pathname: "/admin-order-detail",
+        params: { orderId },
+      });
+    },
+    [router]
+  );
+
+  const sortedOrders = useMemo(() => {
+    const searchLower = search.trim().toLowerCase();
+
+    const filtered = orders.filter((order) => {
+      const matchesSearch =
+        !searchLower ||
+        (order.orderNumber &&
+          order.orderNumber.toString().toLowerCase().includes(searchLower)) ||
+        (order.userNames &&
+          order.userNames.toLowerCase().includes(searchLower)) ||
+        (order.userLastNames &&
+          order.userLastNames.toLowerCase().includes(searchLower)) ||
+        (order.userId && order.userId.toLowerCase().includes(searchLower));
+
+      const matchesStatus =
+        statusFilter === "Todos"
+          ? true
+          : statusFilter === ("Alertas IA" as any)
+          ? (order as any).aiRiskFlag === true
+          : order.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
     });
-  };
 
-  const filteredOrders = orders.filter((order) => {
-    const searchLower = search.toLowerCase();
+    return filtered.sort((a, b) => {
+      if (a.status === "pending" && b.status !== "pending") return -1;
+      if (a.status !== "pending" && b.status === "pending") return 1;
 
-    const matchesSearch =
-      (order.orderNumber &&
-        order.orderNumber.toString().toLowerCase().includes(searchLower)) ||
-      (order.userNames &&
-        order.userNames.toLowerCase().includes(searchLower)) ||
-      (order.userLastNames &&
-        order.userLastNames.toLowerCase().includes(searchLower)) ||
-      (order.userId && order.userId.toLowerCase().includes(searchLower));
+      const orderA = parseInt(String(a.orderNumber), 10);
+      const orderB = parseInt(String(b.orderNumber), 10);
+      return orderB - orderA;
+    });
+  }, [orders, search, statusFilter]);
 
-    const matchesStatus =
-      statusFilter === "Todos"
-        ? true
-        : statusFilter === ("Alertas IA" as any)
-        ? (order as any).aiRiskFlag === true
-        : order.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  return (
-    <>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{ paddingBottom: 120 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={fetchOrders}
-            colors={["#E31E24"]}
-            tintColor="#E31E24"
-          />
-        }
-      >
+  const renderHeader = useCallback(
+    () => (
+      <>
         <View style={styles.topLogoContainer}>
           <Image
             source={require("@/assets/images/logo2.png")}
@@ -146,7 +150,7 @@ const AdminOrdersScreen = () => {
           onChangeText={setSearch}
         />
 
-          <FilterChips
+        <FilterChips
           options={ORDER_FILTER_OPTIONS}
           activeFilter={statusFilter}
           onSelectFilter={(filter) => setStatusFilter(filter as any)}
@@ -154,25 +158,43 @@ const AdminOrdersScreen = () => {
           activeColor={statusFilter === "Alertas IA" ? "#D32F2F" : Palette.primary}
           style={{ marginBottom: 12 }}
         />
+      </>
+    ),
+    [fetchOrders, search, statusFilter, orderCounts]
+  );
 
-        {[...filteredOrders]
-          .sort((a, b) => {
-            if (a.status === "pending" && b.status !== "pending") return -1;
-            if (a.status !== "pending" && b.status === "pending") return 1;
+  const renderOrderItem = useCallback(
+    ({ item }: { item: any }) => (
+      <OrderCard
+        key={item.id}
+        order={item}
+        onPressDetails={handleViewDetails}
+      />
+    ),
+    [handleViewDetails]
+  );
 
-            const orderA = parseInt(String(a.orderNumber), 10);
-            const orderB = parseInt(String(b.orderNumber), 10);
-            return orderB - orderA;
-          })
-          .map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              onPressDetails={handleViewDetails}
-            />
-          ))}
-      </ScrollView>
-    </>
+  return (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 120 }}
+      data={sortedOrders}
+      keyExtractor={(item) => item.id}
+      renderItem={renderOrderItem}
+      ListHeaderComponent={renderHeader}
+      initialNumToRender={8}
+      maxToRenderPerBatch={10}
+      windowSize={5}
+      removeClippedSubviews={true}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={fetchOrders}
+          colors={["#E31E24"]}
+          tintColor="#E31E24"
+        />
+      }
+    />
   );
 };
 
