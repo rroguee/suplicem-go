@@ -92,16 +92,27 @@ const AdminOrdersScreen = () => {
   const sortedOrders = useMemo(() => {
     const searchLower = search.trim().toLowerCase();
 
+    const searchWords = searchLower.split(/\s+/).filter(Boolean);
+
     const filtered = orders.filter((order) => {
+      const fullName = `${order.userNames || ""} ${order.userLastNames || ""}`.trim().toLowerCase();
+      const orderNum = String(order.orderNumber || "").toLowerCase();
+      const fullOrderNum = `ord-${orderNum}`.toLowerCase();
+      const phone = String(order.userPhone || "").toLowerCase();
+      const userId = String(order.userId || "").toLowerCase();
+
       const matchesSearch =
-        !searchLower ||
-        (order.orderNumber &&
-          order.orderNumber.toString().toLowerCase().includes(searchLower)) ||
-        (order.userNames &&
-          order.userNames.toLowerCase().includes(searchLower)) ||
-        (order.userLastNames &&
-          order.userLastNames.toLowerCase().includes(searchLower)) ||
-        (order.userId && order.userId.toLowerCase().includes(searchLower));
+        searchWords.length === 0 ||
+        fullName.includes(searchLower) ||
+        orderNum.includes(searchLower) ||
+        fullOrderNum.includes(searchLower) ||
+        phone.includes(searchLower) ||
+        userId.includes(searchLower) ||
+        searchWords.every((word) =>
+          fullName.includes(word) ||
+          orderNum.includes(word) ||
+          phone.includes(word)
+        );
 
       const matchesStatus =
         statusFilter === "Todos"
