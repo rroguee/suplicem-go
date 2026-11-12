@@ -73,11 +73,11 @@ export const useAdminOrderDetail = (orderId?: string) => {
     }
   }, [orderId]);
 
-  // 4. Cargar conductores disponibles y viajes activos
+  // 4. Cargar conductores disponibles (activos) y viajes
   const fetchDriversAndTrips = useCallback(async () => {
     try {
       const [driversRes, tripsRes] = await Promise.all([
-        getUsers({ userType: "driver" }),
+        getUsers({ userType: "driver", status: "active" }),
         getAllTrips(),
       ]);
       if (driversRes.success && driversRes.users) {
@@ -102,33 +102,8 @@ export const useAdminOrderDetail = (orderId?: string) => {
     }, [orderId, fetchFreshOrder, fetchTripDetails, fetchDriversAndTrips])
   );
 
-  // 3. Cargar clientes
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await getUsers({ userType: "client" });
-        if (response.success && response.users) {
-          setUsers(response.users);
-        } else {
-          showAlert({
-            message: "No se pudieron cargar los usuarios.",
-            type: "error",
-          });
-        }
-      } catch (error) {
-        console.error("Error al obtener usuarios:", error);
-        showAlert({
-          message: "Error de red al cargar usuarios.",
-          type: "error",
-        });
-      }
-    };
-    fetchUsers();
-  }, [showAlert]);
-
-  useEffect(() => {
-    fetchDriversAndTrips();
-  }, [fetchDriversAndTrips]);
+  // Nota: La información y direcciones del cliente ya viajan dentro del objeto 'order' (clientAddresses / userAddresses).
+  // La carga de choferes y viajes ya se gestiona de forma única en useFocusEffect al entrar a la pantalla.
 
   // 5. Acción: Aprobar orden (con o sin conductor asignado, o con viajes planificados)
   const approveOrder = async (
