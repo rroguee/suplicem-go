@@ -6,7 +6,7 @@ import React, { useCallback, useContext, useMemo, useState } from "react";
 import { useAlert } from "@/context/alertContext";
 import { FilterChips, FilterOption } from "@/components/FilterChips";
 import {
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   TextInput,
@@ -113,26 +113,31 @@ const TripsScreen: React.FC = () => {
     return counts;
   }, [trips]);
 
-  const filteredTrips = trips.filter((trip) => {
-    const matchesSearch =
-      trip.tripNumber?.toLowerCase().includes(search.toLowerCase()) ||
-      trip.comments?.toLowerCase().includes(search.toLowerCase()) ||
-      trip.orderIds.some((id) =>
-        id.toLowerCase().includes(search.toLowerCase())
-      );
+  const filteredTrips = useMemo(() => {
+    const searchLower = search.trim().toLowerCase();
 
-    const matchesStatus =
-      statusFilter === "Todos" ||
-      (statusFilter === "fractional" && isTripFractional(trip.tripNumber)) ||
-      trip.status === statusFilter ||
-      (statusFilter === "available" && trip.status === "assigned") ||
-      (statusFilter === "accepted" &&
-        (trip.status === "started" || trip.status === "in_progress"));
+    return trips.filter((trip) => {
+      const matchesSearch =
+        !searchLower ||
+        trip.tripNumber?.toLowerCase().includes(searchLower) ||
+        trip.comments?.toLowerCase().includes(searchLower) ||
+        trip.orderIds.some((id) =>
+          id.toLowerCase().includes(searchLower)
+        );
 
-    return matchesSearch && matchesStatus;
-  });
+      const matchesStatus =
+        statusFilter === "Todos" ||
+        (statusFilter === "fractional" && isTripFractional(trip.tripNumber)) ||
+        trip.status === statusFilter ||
+        (statusFilter === "available" && trip.status === "assigned") ||
+        (statusFilter === "accepted" &&
+          (trip.status === "started" || trip.status === "in_progress"));
 
-  const handleViewTrip = async (tripId: string) => {
+      return matchesSearch && matchesStatus;
+    });
+  }, [trips, search, statusFilter]);
+
+  const handleViewTrip = useCallback(async (tripId: string) => {
     try {
       show();
       const response = await getTripDetail(tripId);
@@ -155,77 +160,95 @@ const TripsScreen: React.FC = () => {
     } finally {
       hide();
     }
-  };
+  }, [show, hide, saveTrip, router, showAlert]);
+
+  const renderHeader = useCallback(
+    () => (
+      <>
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>Gestión de viajes</Text>
+        </View>
+
+        <TextInput
+          placeholder="Buscar viaje..."
+          placeholderTextColor="#999"
+          style={styles.input}
+          value={search}
+          onChangeText={setSearch}
+        />
+
+        <FilterChips
+          options={TRIP_FILTER_OPTIONS}
+          activeFilter={statusFilter}
+          onSelectFilter={setStatusFilter}
+          counts={tripCounts}
+          style={{ marginBottom: 16 }}
+        />
+      </>
+    ),
+    [search, statusFilter, tripCounts]
+  );
+
+  const renderTripItem = useCallback(
+    ({ item: trip }: { item: Trip }) => {
+      const statusInfo =
+        statusTranslation[trip.status ?? ""] || statusTranslation.default;
+
+      return (
+        <TouchableOpacity
+          key={trip.id}
+          style={styles.tripCard}
+          onPress={() => handleViewTrip(trip.id)}
+        >
+          <View style={styles.tripHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.tripNumber}>{trip.tripNumber}</Text>
+              {isTripFractional(trip.tripNumber) && (
+                <View style={styles.fractionalTag}>
+                  <Text style={styles.fractionalTagText}>🧩 Despacho Fraccionado</Text>
+                </View>
+              )}
+            </View>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: statusInfo.color },
+              ]}
+            >
+              <Text style={styles.statusBadgeText}>{statusInfo.text}</Text>
+            </View>
+          </View>
+          <Text style={styles.tripInfo}>
+            Toneladas: <Text style={styles.bold}>{trip.totalTons}</Text>
+          </Text>
+          <Text style={styles.tripInfo}>
+            Fecha:{" "}
+            <Text style={styles.bold}>
+              {new Date(trip.createdAt).toLocaleString()}
+            </Text>
+          </Text>
+          {trip.comments ? (
+            <Text style={styles.tripComment}>{trip.comments}</Text>
+          ) : null}
+        </TouchableOpacity>
+      );
+    },
+    [handleViewTrip]
+  );
 
   return (
-    <ScrollView
+    <FlatList
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 120 }}
-    >
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Gestión de viajes</Text>
-      </View>
-
-      <TextInput
-        placeholder="Buscar viaje..."
-        placeholderTextColor="#999"
-        style={styles.input}
-        value={search}
-        onChangeText={setSearch}
-      />
-
-      <FilterChips
-        options={TRIP_FILTER_OPTIONS}
-        activeFilter={statusFilter}
-        onSelectFilter={setStatusFilter}
-        counts={tripCounts}
-        style={{ marginBottom: 16 }}
-      />
-
-      {filteredTrips?.map((trip) => {
-        const statusInfo =
-          statusTranslation[trip.status ?? ""] || statusTranslation.default;
-
-        return (
-          <TouchableOpacity
-            key={trip.id}
-            style={styles.tripCard}
-            onPress={() => handleViewTrip(trip.id)}
-          >
-            <View style={styles.tripHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.tripNumber}>{trip.tripNumber}</Text>
-                {isTripFractional(trip.tripNumber) && (
-                  <View style={styles.fractionalTag}>
-                    <Text style={styles.fractionalTagText}>🧩 Despacho Fraccionado</Text>
-                  </View>
-                )}
-              </View>
-              <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: statusInfo.color },
-                ]}
-              >
-                <Text style={styles.statusBadgeText}>{statusInfo.text}</Text>
-              </View>
-            </View>
-            <Text style={styles.tripInfo}>
-              Toneladas: <Text style={styles.bold}>{trip.totalTons}</Text>
-            </Text>
-            <Text style={styles.tripInfo}>
-              Fecha:{" "}
-              <Text style={styles.bold}>
-                {new Date(trip.createdAt).toLocaleString()}
-              </Text>
-            </Text>
-            {trip.comments ? (
-              <Text style={styles.tripComment}>{trip.comments}</Text>
-            ) : null}
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+      data={filteredTrips}
+      keyExtractor={(item) => item.id}
+      renderItem={renderTripItem}
+      ListHeaderComponent={renderHeader}
+      initialNumToRender={8}
+      maxToRenderPerBatch={10}
+      windowSize={5}
+      removeClippedSubviews={true}
+    />
   );
 };
 

@@ -3,9 +3,9 @@ import { useLoading } from "@/context/loadingContext";
 import { getDriverTripsHistory } from "@/services/tripsService";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   TextInput,
@@ -74,84 +74,109 @@ const DriverTripsScreen: React.FC = () => {
     });
   };
 
-  const filteredTrips = trips.filter((trip) => {
-    const searchLower = search.toLowerCase();
+  const filteredTrips = useMemo(() => {
+    const searchLower = search.trim().toLowerCase();
+    if (!searchLower) return trips;
 
-    const matchesTripNumber = trip.tripNumber
-      ?.toLowerCase()
-      .includes(searchLower);
-    const matchesComments = trip.comments?.toLowerCase().includes(searchLower);
-    const matchesStatus = (statusMap[trip.status || "default"]?.text || "Desconocido")
-      .toLowerCase()
-      .includes(searchLower);
-    const matchesOrderIds = trip.orderIds?.some((id) =>
-      id.toLowerCase().includes(searchLower)
-    );
-    const matchesCreatedAt = new Date(trip.createdAt)
-      .toLocaleString()
-      .toLowerCase()
-      .includes(searchLower);
+    return trips.filter((trip) => {
+      const matchesTripNumber = trip.tripNumber
+        ?.toLowerCase()
+        .includes(searchLower);
+      const matchesComments = trip.comments?.toLowerCase().includes(searchLower);
+      const matchesStatus = (statusMap[trip.status || "default"]?.text || "Desconocido")
+        .toLowerCase()
+        .includes(searchLower);
+      const matchesOrderIds = trip.orderIds?.some((id) =>
+        id.toLowerCase().includes(searchLower)
+      );
+      const matchesCreatedAt = new Date(trip.createdAt)
+        .toLocaleString()
+        .toLowerCase()
+        .includes(searchLower);
 
-    return (
-      matchesTripNumber ||
-      matchesComments ||
-      matchesStatus ||
-      matchesOrderIds ||
-      matchesCreatedAt
-    );
-  });
+      return (
+        matchesTripNumber ||
+        matchesComments ||
+        matchesStatus ||
+        matchesOrderIds ||
+        matchesCreatedAt
+      );
+    });
+  }, [trips, search]);
+
+  const renderHeader = useCallback(
+    () => (
+      <>
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>Histórico de viajes</Text>
+          <TouchableOpacity onPress={fetchTrips} style={styles.refreshButton}>
+            <Ionicons name="refresh" size={24} color="#A04A0E" />
+          </TouchableOpacity>
+        </View>
+
+        <TextInput
+          placeholder="Buscar..."
+          placeholderTextColor="#999"
+          style={styles.input}
+          value={search}
+          onChangeText={setSearch}
+        />
+      </>
+    ),
+    [fetchTrips, search]
+  );
+
+  const renderEmpty = useCallback(
+    () => (
+      <Text style={styles.noTrips}>No se encontraron viajes</Text>
+    ),
+    []
+  );
+
+  const renderTripItem = useCallback(
+    ({ item: trip }: { item: Trip }) => {
+      const { text: statusText, color: statusColor } =
+        statusMap[trip.status || "default"] || statusMap.default;
+
+      return (
+        <TouchableOpacity
+          key={trip.id}
+          style={styles.card}
+          onPress={() => handleOpenTrip(trip.id)}
+        >
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>{trip.tripNumber}</Text>
+            <Text
+              style={[styles.statusBadge, { backgroundColor: statusColor }]}
+            >
+              {statusText}
+            </Text>
+          </View>
+          <Text style={styles.cardDetail}>Toneladas: {trip.totalTons}</Text>
+          <Text style={styles.cardDetail}>
+            Fecha: {new Date(trip.createdAt).toLocaleDateString()}{" "}
+            {new Date(trip.createdAt).toLocaleTimeString()}
+          </Text>
+        </TouchableOpacity>
+      );
+    },
+    []
+  );
 
   return (
-    <ScrollView
+    <FlatList
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 120 }}
-    >
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Histórico de viajes</Text>
-        <TouchableOpacity onPress={fetchTrips} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={24} color="#A04A0E" />
-        </TouchableOpacity>
-      </View>
-
-      <TextInput
-        placeholder="Buscar..."
-        placeholderTextColor="#999"
-        style={styles.input}
-        value={search}
-        onChangeText={setSearch}
-      />
-
-      {filteredTrips.length === 0 && (
-        <Text style={styles.noTrips}>No se encontraron viajes</Text>
-      )}
-
-      {filteredTrips.map((trip) => {
-        const { text: statusText, color: statusColor } =
-          statusMap[trip.status || "default"] || statusMap.default;
-
-        return (
-          <TouchableOpacity
-            key={trip.id}
-            style={styles.card}
-            onPress={() => handleOpenTrip(trip.id)}
-          >
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{trip.tripNumber}</Text>
-              <Text
-                style={[styles.statusBadge, { backgroundColor: statusColor }]}
-              >
-                {statusText}
-              </Text>
-            </View>
-            <Text style={styles.cardDetail}>Toneladas: {trip.totalTons}</Text>
-            <Text style={styles.cardDetail}>
-              Fecha: {new Date(trip.createdAt).toLocaleDateString()}{" "}
-              {new Date(trip.createdAt).toLocaleTimeString()}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+      data={filteredTrips}
+      keyExtractor={(item) => item.id}
+      renderItem={renderTripItem}
+      ListHeaderComponent={renderHeader}
+      ListEmptyComponent={renderEmpty}
+      initialNumToRender={8}
+      maxToRenderPerBatch={10}
+      windowSize={5}
+      removeClippedSubviews={true}
+    />
   );
 };
 
