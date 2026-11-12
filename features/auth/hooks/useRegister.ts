@@ -11,12 +11,14 @@ import { RegisterFormData } from "@/types/users";
 import { registerSchema } from "@/validations/registerSchema";
 import { pickAndCompressImage } from "@/utils/imageUtils";
 import { saveAuthSession, saveAcceptedTerms } from "@/utils/authStorage";
+import { usePhoneRegister } from "./usePhoneRegister";
 
 export const useRegister = () => {
   const authContext = useContext(AuthContext);
   const { show, hide } = useLoading();
   const { showAlert } = useAlert();
   const router = useRouter();
+  const phoneRegistration = usePhoneRegister();
   const [identificationImage, setIdentificationImage] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
@@ -30,6 +32,7 @@ export const useRegister = () => {
   } = useForm<RegisterFormData>({
     resolver: yupResolver(registerSchema) as any,
     defaultValues: {
+      registerMethod: "email",
       personType: "fisica",
       companyRnc: "",
       companyName: "",
@@ -55,6 +58,7 @@ export const useRegister = () => {
 
   const addresses = watch("addresses") || [];
   const userType = watch("userType");
+  const registerMethod = watch("registerMethod") || "email";
   const personType = watch("personType") || "fisica";
   const identificationType = watch("identificationType");
   const [isLookingUpCedula, setIsLookingUpCedula] = useState(false);
@@ -197,8 +201,17 @@ export const useRegister = () => {
     }
 
     const isEmpresa = data.personType === "juridica";
+    const isPhone = data.registerMethod === "phone";
 
-    if (!identificationImage && !isEmpresa) {
+    if (isPhone && isEmpresa) {
+      showAlert({
+        message: "El registro de empresas requiere correo electrónico.",
+        type: "warning",
+      });
+      return;
+    }
+
+    if (!identificationImage && !isEmpresa && !isPhone) {
       showAlert({
         message: "Debes adjuntar la foto de tu cédula o pasaporte para la verificación de cuenta por el administrador.",
         type: "warning",
@@ -206,10 +219,9 @@ export const useRegister = () => {
       return;
     }
 
-    const payload: any = {
-      ...data,
-      identificationImage: identificationImage || undefined,
-    };
+    const payload: any = { ...data };
+    delete payload.confirmPassword;
+    delete payload.registerMethod;
 
     if (isEmpresa) {
       payload.userType = "client";
@@ -224,7 +236,16 @@ export const useRegister = () => {
     if (payload.userType === "driver" && (!payload.addresses || payload.addresses.length === 0)) {
       delete payload.addresses;
     }
-    delete payload.confirmPassword;
+
+    if (isPhone) {
+      delete payload.password;
+      delete payload.identificationImage;
+      if (!payload.email) delete payload.email;
+      await phoneRegistration.requestCode(payload);
+      return;
+    }
+
+    payload.identificationImage = identificationImage || undefined;
 
     show();
     try {
@@ -300,5 +321,7 @@ export const useRegister = () => {
     isLookingUpRnc,
     identificationType,
     personType,
+    registerMethod,
+    phoneRegistration,
   };
 };
