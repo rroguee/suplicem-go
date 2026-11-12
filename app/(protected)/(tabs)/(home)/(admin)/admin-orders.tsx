@@ -123,46 +123,6 @@ const AdminOrdersScreen = () => {
     });
   }, [orders, search, statusFilter]);
 
-  const renderHeader = useCallback(
-    () => (
-      <>
-        <View style={styles.topLogoContainer}>
-          <Image
-            source={require("@/assets/images/logo2.png")}
-            style={styles.topLogo}
-            resizeMode="contain"
-          />
-        </View>
-
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>Órdenes de Clientes</Text>
-
-          <TouchableOpacity onPress={fetchOrders} style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#E31E24" />
-          </TouchableOpacity>
-        </View>
-
-        <TextInput
-          placeholder="Buscar ..."
-          placeholderTextColor="#999"
-          style={styles.input}
-          value={search}
-          onChangeText={setSearch}
-        />
-
-        <FilterChips
-          options={ORDER_FILTER_OPTIONS}
-          activeFilter={statusFilter}
-          onSelectFilter={(filter) => setStatusFilter(filter as any)}
-          counts={orderCounts}
-          activeColor={statusFilter === "Alertas IA" ? "#D32F2F" : Palette.primary}
-          style={{ marginBottom: 12 }}
-        />
-      </>
-    ),
-    [fetchOrders, search, statusFilter, orderCounts]
-  );
-
   const renderOrderItem = useCallback(
     ({ item }: { item: any }) => (
       <OrderCard
@@ -175,26 +135,61 @@ const AdminOrdersScreen = () => {
   );
 
   return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 120 }}
-      data={sortedOrders}
-      keyExtractor={(item) => item.id}
-      renderItem={renderOrderItem}
-      ListHeaderComponent={renderHeader}
-      initialNumToRender={8}
-      maxToRenderPerBatch={10}
-      windowSize={5}
-      removeClippedSubviews={true}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={fetchOrders}
-          colors={["#E31E24"]}
-          tintColor="#E31E24"
+    <View style={styles.container}>
+      <View style={styles.topLogoContainer}>
+        <Image
+          source={require("@/assets/images/logo2.png")}
+          style={styles.topLogo}
+          resizeMode="contain"
         />
-      }
-    />
+      </View>
+
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Órdenes de Clientes</Text>
+
+        <TouchableOpacity onPress={fetchOrders} style={styles.refreshButton}>
+          <Ionicons name="refresh" size={24} color="#E31E24" />
+        </TouchableOpacity>
+      </View>
+
+      <TextInput
+        placeholder="Buscar ..."
+        placeholderTextColor="#999"
+        style={styles.input}
+        value={search}
+        onChangeText={setSearch}
+      />
+
+      <FilterChips
+        options={ORDER_FILTER_OPTIONS}
+        activeFilter={statusFilter}
+        onSelectFilter={(filter) => setStatusFilter(filter as any)}
+        counts={orderCounts}
+        activeColor={statusFilter === "Alertas IA" ? "#D32F2F" : Palette.primary}
+        style={{ marginBottom: 12 }}
+      />
+
+      <FlatList
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        data={sortedOrders}
+        keyExtractor={(item) => item.id}
+        renderItem={renderOrderItem}
+        keyboardShouldPersistTaps="handled"
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={fetchOrders}
+            colors={["#E31E24"]}
+            tintColor="#E31E24"
+          />
+        }
+      />
+    </View>
   );
 };
 
