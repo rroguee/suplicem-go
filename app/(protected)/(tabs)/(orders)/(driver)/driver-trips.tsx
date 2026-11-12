@@ -104,28 +104,6 @@ const DriverTripsScreen: React.FC = () => {
     });
   }, [trips, search]);
 
-  const renderHeader = useCallback(
-    () => (
-      <>
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>Histórico de viajes</Text>
-          <TouchableOpacity onPress={fetchTrips} style={styles.refreshButton}>
-            <Ionicons name="refresh" size={24} color="#A04A0E" />
-          </TouchableOpacity>
-        </View>
-
-        <TextInput
-          placeholder="Buscar..."
-          placeholderTextColor="#999"
-          style={styles.input}
-          value={search}
-          onChangeText={setSearch}
-        />
-      </>
-    ),
-    [fetchTrips, search]
-  );
-
   const renderEmpty = useCallback(
     () => (
       <Text style={styles.noTrips}>No se encontraron viajes</Text>
@@ -164,19 +142,36 @@ const DriverTripsScreen: React.FC = () => {
   );
 
   return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 120 }}
-      data={filteredTrips}
-      keyExtractor={(item) => item.id}
-      renderItem={renderTripItem}
-      ListHeaderComponent={renderHeader}
-      ListEmptyComponent={renderEmpty}
-      initialNumToRender={8}
-      maxToRenderPerBatch={10}
-      windowSize={5}
-      removeClippedSubviews={true}
-    />
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Histórico de viajes</Text>
+        <TouchableOpacity onPress={fetchTrips} style={styles.refreshButton}>
+          <Ionicons name="refresh" size={24} color="#A04A0E" />
+        </TouchableOpacity>
+      </View>
+
+      <TextInput
+        placeholder="Buscar..."
+        placeholderTextColor="#999"
+        style={styles.input}
+        value={search}
+        onChangeText={setSearch}
+      />
+
+      <FlatList
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        data={filteredTrips}
+        keyExtractor={(item) => item.id}
+        renderItem={renderTripItem}
+        ListEmptyComponent={renderEmpty}
+        keyboardShouldPersistTaps="handled"
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
+      />
+    </View>
   );
 };
 

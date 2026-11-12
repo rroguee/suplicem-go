@@ -162,33 +162,6 @@ const TripsScreen: React.FC = () => {
     }
   }, [show, hide, saveTrip, router, showAlert]);
 
-  const renderHeader = useCallback(
-    () => (
-      <>
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>Gestión de viajes</Text>
-        </View>
-
-        <TextInput
-          placeholder="Buscar viaje..."
-          placeholderTextColor="#999"
-          style={styles.input}
-          value={search}
-          onChangeText={setSearch}
-        />
-
-        <FilterChips
-          options={TRIP_FILTER_OPTIONS}
-          activeFilter={statusFilter}
-          onSelectFilter={setStatusFilter}
-          counts={tripCounts}
-          style={{ marginBottom: 16 }}
-        />
-      </>
-    ),
-    [search, statusFilter, tripCounts]
-  );
-
   const renderTripItem = useCallback(
     ({ item: trip }: { item: Trip }) => {
       const statusInfo =
@@ -237,18 +210,40 @@ const TripsScreen: React.FC = () => {
   );
 
   return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 120 }}
-      data={filteredTrips}
-      keyExtractor={(item) => item.id}
-      renderItem={renderTripItem}
-      ListHeaderComponent={renderHeader}
-      initialNumToRender={8}
-      maxToRenderPerBatch={10}
-      windowSize={5}
-      removeClippedSubviews={true}
-    />
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Gestión de viajes</Text>
+      </View>
+
+      <TextInput
+        placeholder="Buscar viaje..."
+        placeholderTextColor="#999"
+        style={styles.input}
+        value={search}
+        onChangeText={setSearch}
+      />
+
+      <FilterChips
+        options={TRIP_FILTER_OPTIONS}
+        activeFilter={statusFilter}
+        onSelectFilter={setStatusFilter}
+        counts={tripCounts}
+        style={{ marginBottom: 16 }}
+      />
+
+      <FlatList
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        data={filteredTrips}
+        keyExtractor={(item) => item.id}
+        renderItem={renderTripItem}
+        keyboardShouldPersistTaps="handled"
+        initialNumToRender={8}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        removeClippedSubviews={true}
+      />
+    </View>
   );
 };
 
