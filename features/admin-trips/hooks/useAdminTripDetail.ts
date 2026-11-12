@@ -50,12 +50,17 @@ export const useAdminTripDetail = () => {
     }
   }, [tripId, saveTrip]);
 
+  const isTerminalStatus =
+    trip?.status === "completed" || trip?.status === "canceled";
+
   useFocusEffect(
     useCallback(() => {
       refreshTripData();
-      const interval = setInterval(refreshTripData, 8000);
+      if (isTerminalStatus) return;
+
+      const interval = setInterval(refreshTripData, 15000);
       return () => clearInterval(interval);
-    }, [refreshTripData])
+    }, [refreshTripData, isTerminalStatus])
   );
 
   const handleCancelTrip = async () => {
@@ -140,9 +145,6 @@ export const useAdminTripDetail = () => {
       hide();
     }
   };
-
-  const isTerminalStatus =
-    trip?.status === "completed" || trip?.status === "canceled";
 
   return {
     trip,

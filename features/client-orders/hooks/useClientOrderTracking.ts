@@ -71,9 +71,12 @@ export const useClientOrderTracking = (selectedOrder?: any) => {
 
       refreshDriverLocationAndTripStatus();
 
+      const isTerminal = ["completed", "rejected", "cancelled"].includes(selectedOrder?.status);
+      if (isTerminal) return;
+
       const interval = setInterval(() => {
         refreshDriverLocationAndTripStatus();
-      }, 8000);
+      }, 15000);
 
       return () => clearInterval(interval);
     }, [selectedOrder, refreshDriverLocationAndTripStatus])
