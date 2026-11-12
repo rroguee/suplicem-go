@@ -112,6 +112,10 @@ export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
 
   const handleApprovePress = () => {
     if (!currentOrder?.id) return;
+    if (currentOrder.deliveryType === "almacen") {
+      approveOrder();
+      return;
+    }
     router.push({
       pathname: "/order-approval",
       params: { orderId: currentOrder.id },

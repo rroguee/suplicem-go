@@ -158,26 +158,32 @@ export function useOrderApprovalPlanner(orderId: string) {
   const handleConfirmApproval = async () => {
     if (!order) return;
 
-    for (const del of deliveriesPlan) {
-      const planned = del.trucks.reduce((sum, t) => sum + (Number(t.totalTons) || 0), 0);
-      if (Math.abs(planned - del.totalTons) > 0.1) {
-        showAlert({
-          message: `La Entrega #${del.index + 1} tiene ${planned.toFixed(2)} t planificadas pero requiere ${del.totalTons.toFixed(2)} t. Por favor equilibra los camiones.`,
-          type: "warning",
-        });
-        return;
+    const isPickup = order.deliveryType === "almacen";
+
+    if (!isPickup) {
+      for (const del of deliveriesPlan) {
+        const planned = del.trucks.reduce((sum, t) => sum + (Number(t.totalTons) || 0), 0);
+        if (Math.abs(planned - del.totalTons) > 0.1) {
+          showAlert({
+            message: `La Entrega #${del.index + 1} tiene ${planned.toFixed(2)} t planificadas pero requiere ${del.totalTons.toFixed(2)} t. Por favor equilibra los camiones.`,
+            type: "warning",
+          });
+          return;
+        }
       }
     }
 
-    const allTrips = deliveriesPlan.flatMap((del) =>
-      del.trucks.map((truck, tIdx) => ({
-        totalTons: Number(truck.totalTons.toFixed(2)),
-        driverId: truck.driverId,
-        deliveryId: del.id,
-        destinationAddress: del.destinationAddress,
-        comments: `Viaje Camión #${tIdx + 1} para Entrega #${del.index + 1} (${del.addressDescription})`,
-      }))
-    );
+    const allTrips = isPickup
+      ? []
+      : deliveriesPlan.flatMap((del) =>
+          del.trucks.map((truck, tIdx) => ({
+            totalTons: Number(truck.totalTons.toFixed(2)),
+            driverId: truck.driverId,
+            deliveryId: del.id,
+            destinationAddress: del.destinationAddress,
+            comments: `Viaje Camión #${tIdx + 1} para Entrega #${del.index + 1} (${del.addressDescription})`,
+          }))
+        );
 
     try {
       show();
@@ -185,11 +191,18 @@ export function useOrderApprovalPlanner(orderId: string) {
       if (!appRes.success && appRes.message?.includes("ya aprobada") === false) {
         throw new Error(appRes.message || "Error al aprobar la orden");
       }
-      const splitRes = await splitOrderTrips(order.id!, allTrips);
-      if (!splitRes.success) {
-        throw new Error(splitRes.message || "Error al generar los viajes fraccionados");
+      if (!isPickup) {
+        const splitRes = await splitOrderTrips(order.id!, allTrips);
+        if (!splitRes.success) {
+          throw new Error(splitRes.message || "Error al generar los viajes fraccionados");
+        }
       }
-      showAlert({ message: "¡Orden aprobada y viajes generados correctamente!", type: "success" });
+      showAlert({
+        message: isPickup
+          ? "¡Orden de retiro en almacén aprobada correctamente!"
+          : "¡Orden aprobada y viajes generados correctamente!",
+        type: "success",
+      });
       router.back();
     } catch (err: any) {
       console.error("Error al aprobar orden y generar viajes:", err);

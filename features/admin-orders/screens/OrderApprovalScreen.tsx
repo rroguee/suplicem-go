@@ -49,6 +49,7 @@ export const OrderApprovalScreen: React.FC<Props> = ({ orderId }) => {
     );
   }
 
+  const isPickup = order.deliveryType === "almacen";
   const totalOrderTons = Number(order.totalTons || order.pendingBalance) || 0;
   const totalPlannedTons = deliveriesPlan.reduce(
     (acc, del) => acc + del.trucks.reduce((sum, t) => sum + (Number(t.totalTons) || 0), 0),
@@ -70,29 +71,34 @@ export const OrderApprovalScreen: React.FC<Props> = ({ orderId }) => {
           onViewReceipt={() => setReceiptModalVisible(true)}
         />
 
-        <Text style={styles.sectionTitle}>Planificación de Entregas y Camiones</Text>
-        <Text style={styles.sectionSubtitle}>
-          Verifica y fracciona la carga de cada destino en viajes de camiones para los conductores:
-        </Text>
+        {!isPickup && (
+          <>
+            <Text style={styles.sectionTitle}>Planificación de Entregas y Camiones</Text>
+            <Text style={styles.sectionSubtitle}>
+              Verifica y fracciona la carga de cada destino en viajes de camiones para los conductores:
+            </Text>
 
-        {deliveriesPlan.map((del, idx) => (
-          <DeliveryApprovalCard
-            key={del.id || `plan-del-${idx}`}
-            delivery={del}
-            onAddTruck={() => handleAddTruck(idx)}
-            onUpdateTruckTons={(truckId, tons) => handleUpdateTruckTons(idx, truckId, tons)}
-            onOpenDriverModal={(truckId) => {
-              const trk = del.trucks.find((t) => t.id === truckId);
-              if (trk) handleOpenDriverModal(idx, trk);
-            }}
-            onRemoveTruck={(truckId) => handleRemoveTruck(idx, truckId)}
-          />
-        ))}
+            {deliveriesPlan.map((del, idx) => (
+              <DeliveryApprovalCard
+                key={del.id || `plan-del-${idx}`}
+                delivery={del}
+                onAddTruck={() => handleAddTruck(idx)}
+                onUpdateTruckTons={(truckId, tons) => handleUpdateTruckTons(idx, truckId, tons)}
+                onOpenDriverModal={(truckId) => {
+                  const trk = del.trucks.find((t) => t.id === truckId);
+                  if (trk) handleOpenDriverModal(idx, trk);
+                }}
+                onRemoveTruck={(truckId) => handleRemoveTruck(idx, truckId)}
+              />
+            ))}
+          </>
+        )}
 
         <OrderApprovalFooter
           totalOrderTons={totalOrderTons}
           totalPlannedTons={totalPlannedTons}
           onConfirm={handleConfirmApproval}
+          isPickup={isPickup}
         />
       </ScrollView>
 

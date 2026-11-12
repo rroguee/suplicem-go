@@ -7,6 +7,7 @@ interface Props {
   totalPlannedTons: number;
   onConfirm: () => void;
   saving?: boolean;
+  isPickup?: boolean;
 }
 
 export const OrderApprovalFooter: React.FC<Props> = ({
@@ -14,6 +15,7 @@ export const OrderApprovalFooter: React.FC<Props> = ({
   totalPlannedTons,
   onConfirm,
   saving = false,
+  isPickup = false,
 }) => {
   return (
     <View style={styles.container}>
@@ -21,12 +23,14 @@ export const OrderApprovalFooter: React.FC<Props> = ({
         <Text style={styles.summaryLabel}>Total Orden:</Text>
         <Text style={styles.summaryVal}>{totalOrderTons.toFixed(2)} t</Text>
       </View>
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Total Planificado en Camiones:</Text>
-        <Text style={[styles.summaryVal, { color: "#166534" }]}>
-          {totalPlannedTons.toFixed(2)} t
-        </Text>
-      </View>
+      {!isPickup && (
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Total Planificado en Camiones:</Text>
+          <Text style={[styles.summaryVal, { color: "#166534" }]}>
+            {totalPlannedTons.toFixed(2)} t
+          </Text>
+        </View>
+      )}
 
       <TouchableOpacity
         style={[styles.confirmButton, saving && { opacity: 0.6 }]}
@@ -36,7 +40,11 @@ export const OrderApprovalFooter: React.FC<Props> = ({
       >
         <Ionicons name="checkmark-circle" size={22} color="#FFFFFF" />
         <Text style={styles.confirmButtonText}>
-          {saving ? "Procesando Aprobación..." : "Confirmar Aprobación y Generar Viajes"}
+          {saving
+            ? "Procesando Aprobación..."
+            : isPickup
+            ? "Confirmar Aprobación (Retiro en Almacén)"
+            : "Confirmar Aprobación y Generar Viajes"}
         </Text>
       </TouchableOpacity>
     </View>
