@@ -19,6 +19,7 @@ export interface DeliveryDetail {
   address?: Address;
   quantity: number;
   unit: string;
+  weightKg?: number;
   status?: "pending" | "delivered" | string;
   delivered?: boolean;
   images?: string[];
@@ -35,6 +36,7 @@ export interface OrderItem {
   unitPrice: number;
   subtotal: number;
   price?: number;
+  weightKg?: number;
 }
 
 export interface Order {

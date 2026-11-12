@@ -56,22 +56,50 @@ export function useOrderApprovalPlanner(orderId: string) {
         const allUsers: User[] = Array.isArray(usersRes) ? usersRes : usersRes.users || [];
         setDrivers(allUsers.filter((u) => u.userType === ROLE.DRIVER));
 
+        const totalItemsQty = (orderData.items || []).reduce(
+          (sum, item) => sum + (Number(item.quantity) || 0),
+          0
+        );
+
         const rawDeliveries = (orderData.deliveries && orderData.deliveries.length > 0)
           ? orderData.deliveries
           : [
               {
                 id: "del-main",
+                productId: orderData.items?.[0]?.productId || "",
                 address: orderData.deliveryAddress,
-                quantity: orderData.items?.[0]?.quantity || 0,
+                quantity: totalItemsQty,
                 unit: orderData.items?.[0]?.unit || "fundas",
               },
             ];
 
+        const orderTotalTons = Number(orderData.totalTons || orderData.pendingBalance) || 0;
+        const rawEstimatedTons = rawDeliveries.map((del) => {
+          const qty = Number(del.quantity) || 0;
+          const matchedItem = orderData.items?.find((i) => i.productId === del.productId);
+          const weightKg = del.weightKg || matchedItem?.weightKg || 42.5;
+          return (qty * weightKg) / 1000;
+        });
+        const totalEstimated = rawEstimatedTons.reduce((sum, t) => sum + t, 0);
+
+        let accumulatedTons = 0;
         const initialPlan: DeliveryPlanState[] = rawDeliveries.map((del, idx) => {
           const qtyFundas = Number(del.quantity) || 0;
-          const tons = Number(((qtyFundas * 42.5) / 1000).toFixed(2));
-          const addressDesc = del.address?.description || "Dirección de orden";
+          let tons: number;
+          if (orderTotalTons > 0) {
+            if (idx === rawDeliveries.length - 1) {
+              tons = Number(Math.max(0, orderTotalTons - accumulatedTons).toFixed(2));
+            } else if (totalEstimated > 0) {
+              tons = Number(((rawEstimatedTons[idx] / totalEstimated) * orderTotalTons).toFixed(2));
+            } else {
+              tons = Number((orderTotalTons / rawDeliveries.length).toFixed(2));
+            }
+            accumulatedTons += tons;
+          } else {
+            tons = Number(rawEstimatedTons[idx].toFixed(2));
+          }
 
+          const addressDesc = del.address?.description || "Dirección de orden";
           const truckCount = Math.max(1, Math.ceil(tons / 21));
           const tonsPerTruck = Number((tons / truckCount).toFixed(2));
 
