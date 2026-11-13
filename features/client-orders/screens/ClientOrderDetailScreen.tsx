@@ -18,6 +18,7 @@ import { ClientOrderMap } from "../components/ClientOrderMap";
 import { ClientDeliveryPinCard } from "../components/ClientDeliveryPinCard";
 import { ClientDeliveryProgressBar } from "../components/ClientDeliveryProgressBar";
 import { ClientTripCard } from "../components/ClientTripCard";
+import { ClientTripTrackingModal } from "../components/ClientTripTrackingModal";
 import { formatProductQuantity } from "@/constants/cartConstants";
 
 interface ClientOrderDetailScreenProps {
@@ -58,6 +59,14 @@ export const ClientOrderDetailScreen: React.FC<
   } = useClientOrderTracking(selectedOrder);
 
   const isMultiTrip = trips.length > 1;
+  const [trackingTripId, setTrackingTripId] = useState<string | null>(null);
+  const activeModalTrip =
+    trips.find(
+      (t: any, idx: number) => (t.id || `trip-${idx}`) === trackingTripId
+    ) || null;
+  const activeModalTripIndex = trips.findIndex(
+    (t: any, idx: number) => (t.id || `trip-${idx}`) === trackingTripId
+  );
   const isCement = selectedOrder?.items?.some(
     (i: any) => i.unit === "fundas" || i.name?.toLowerCase().includes("cemento")
   );
@@ -118,6 +127,7 @@ export const ClientOrderDetailScreen: React.FC<
                   index={idx}
                   onCallDriver={handleCallDriver}
                   onWhatsappDriver={handleWhatsapp}
+                  onTrackTrip={() => setTrackingTripId(t.id || `trip-${idx}`)}
                   isCementOrder={isCement}
                   cementProductName={selectedOrder.items?.find((i: any) =>
                     i.unit === "fundas" || i.name?.toLowerCase().includes("cemento")
@@ -256,8 +266,8 @@ export const ClientOrderDetailScreen: React.FC<
         <ClientOrderTrackingSteps tripStatus={trip?.status} />
       )}
 
-      {/* 7. Mapa de Seguimiento en Vivo (Solo para entregas a domicilio) */}
-      {selectedOrder.deliveryType === "domicilio" && (
+      {/* 7. Mapa de Seguimiento en Vivo (Solo para entregas de un solo camión) */}
+      {selectedOrder.deliveryType === "domicilio" && !isMultiTrip && (
         <ClientOrderMap
           driverLocation={driverLocation}
           trip={trip}
@@ -265,6 +275,18 @@ export const ClientOrderDetailScreen: React.FC<
           orderId={selectedOrder.id}
         />
       )}
+
+      {/* 8. Modal de Seguimiento en Vivo por Camión Individual */}
+      <ClientTripTrackingModal
+        visible={Boolean(activeModalTrip)}
+        trip={activeModalTrip}
+        tripIndex={activeModalTripIndex >= 0 ? activeModalTripIndex : 0}
+        deliveries={selectedOrder.deliveries}
+        orderId={selectedOrder.id}
+        onClose={() => setTrackingTripId(null)}
+        onCallDriver={handleCallDriver}
+        onWhatsappDriver={handleWhatsapp}
+      />
     </ScrollView>
   );
 };

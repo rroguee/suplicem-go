@@ -10,6 +10,7 @@ interface ClientTripCardProps {
   index: number;
   onCallDriver?: (phone?: string) => void;
   onWhatsappDriver?: (phone?: string) => void;
+  onTrackTrip?: (trip: any) => void;
   isCementOrder?: boolean;
   cementProductName?: string;
   destination?: { latitude?: number | string; longitude?: number | string } | null;
@@ -20,6 +21,7 @@ export const ClientTripCard: React.FC<ClientTripCardProps> = ({
   index,
   onCallDriver,
   onWhatsappDriver,
+  onTrackTrip,
   isCementOrder = true,
   cementProductName,
   destination,
@@ -114,6 +116,18 @@ export const ClientTripCard: React.FC<ClientTripCardProps> = ({
           </View>
         )}
       </View>
+
+      {/* Botón de Seguimiento en Vivo para este Camión */}
+      {!isCompleted && onTrackTrip && (
+        <TouchableOpacity
+          style={styles.trackButton}
+          onPress={() => onTrackTrip(trip)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="map-outline" size={16} color="#FFFFFF" />
+          <Text style={styles.trackButtonText}>Ver ubicación en vivo</Text>
+        </TouchableOpacity>
+      )}
 
       {/* PIN de Entrega Único para este Camión */}
       {!isCompleted && trip.deliveryPin ? (
@@ -314,5 +328,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: "#166534",
+  },
+  trackButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#0284C7",
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  trackButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "bold",
   },
 });
