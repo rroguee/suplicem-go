@@ -170,9 +170,7 @@ export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
     handleEdit,
     handleSave,
     handleCancel,
-    addDelivery,
     updateDelivery,
-    removeDelivery,
     handleUserSelection,
     isAddingNewAddress,
     setIsAddingNewAddress,
@@ -349,9 +347,7 @@ export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
           editedDeliveryType={editedDeliveryType}
           editedDeliveries={editedDeliveries}
           productOptions={productOptions}
-          onAddDelivery={addDelivery}
           onUpdateDelivery={updateDelivery}
-          onRemoveDelivery={removeDelivery}
           onUserSelection={handleUserSelection}
           onOpenNewAddressModal={() => setIsAddingNewAddress(true)}
         />
@@ -579,21 +575,41 @@ export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
           allTrips={allTrips}
           selectedDriverId={targetTripForDriver?.assignedDriverId || ""}
           onSelectDriver={(drvId) => {
-            if (targetTripForDriver?.id && drvId) {
-              if (isEditing) {
-                setPendingDriverAssignments((prev) => ({
-                  ...prev,
-                  [targetTripForDriver.id!]: drvId,
-                }));
-              } else {
-                assignDriverToTrip(targetTripForDriver.id, drvId);
-              }
+            if (targetTripForDriver?.id && drvId && isEditing) {
+              setPendingDriverAssignments((prev) => ({
+                ...prev,
+                [targetTripForDriver.id!]: drvId,
+              }));
             }
             setTripDriverModalVisible(false);
             setTargetTripForDriver(null);
           }}
         />
       </ScrollView>
+
+      {/* Barra de acción fija inferior en modo edición */}
+      {isEditing && (
+        <View style={styles.floatingActionBar}>
+          <TouchableOpacity
+            style={[
+              styles.saveFloatingBtn,
+              (isSaving || isTripSaving) && { opacity: 0.6 },
+            ]}
+            onPress={handleSaveAll}
+            disabled={isSaving || isTripSaving}
+          >
+            <Text style={styles.buttonText}>
+              {isSaving || isTripSaving ? "Guardando..." : "Guardar Cambios"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.cancelFloatingBtn}
+            onPress={handleCancelAll}
+          >
+            <Text style={styles.buttonText}>Cancelar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 };
@@ -699,6 +715,38 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 20,
     marginBottom: 20,
+  },
+  floatingActionBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: "row",
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  saveFloatingBtn: {
+    flex: 1,
+    backgroundColor: "#166534",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  cancelFloatingBtn: {
+    flex: 1,
+    backgroundColor: "#DC2626",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
   },
   approveButton: {
     backgroundColor: "#4CAF50",

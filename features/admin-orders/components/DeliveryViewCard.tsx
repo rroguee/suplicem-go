@@ -21,7 +21,7 @@ export const DeliveryViewCard: React.FC<DeliveryViewCardProps> = ({
 
   return (
     <View style={styles.deliveryCard}>
-      <Text style={styles.deliveryHeader}>Entrega #{index + 1}</Text>
+      <Text style={styles.deliveryHeader}>Punto de Entrega</Text>
       <Text style={styles.deliveryAddress}>
         📍 {delivery.address?.description || "Dirección no especificada"}
         {delivery.address?.additionalInfo ? `, ${delivery.address.additionalInfo}` : ""}

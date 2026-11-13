@@ -48,7 +48,7 @@ export default function TabLayout() {
                   ? "cart-outline"
                   : "home-outline"
               }
-              color={color}
+              color={typeof color === "string" ? color : undefined}
             />
           ),
         }}
@@ -103,7 +103,11 @@ export default function TabLayout() {
               : "Configuración",
           popToTopOnBlur: true,
           tabBarIcon: ({ color }) => (
-            <Ionicons name="settings-outline" size={26} color={color} />
+            <Ionicons
+              name="settings-outline"
+              size={26}
+              color={typeof color === "string" ? color : undefined}
+            />
           ),
         }}
         listeners={({ navigation }) => ({

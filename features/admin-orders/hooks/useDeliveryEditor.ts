@@ -6,7 +6,6 @@ import { updateUserAddresses } from "@/services/userService";
 import { Address, User } from "@/types/users";
 import { Order, DeliveryDetail as OrderDelivery } from "@/types/orders";
 import { useNewDeliveryAddress } from "./useNewDeliveryAddress";
-import { redistributeEquitably } from "../utils/deliveryDistributionUtils";
 
 const generateTempDeliveryId = () => Math.random().toString(36).substring(2, 9);
 
@@ -144,6 +143,42 @@ export const useDeliveryEditor = (
 
   const handleCancel = () => {
     setIsEditing(false);
+    setEditedDeliveryType(order?.deliveryType || "");
+    if (order) {
+      const clientSavedAddresses =
+        order.clientAddresses || (order as any).userAddresses || [];
+      const original = (order.deliveries || []).map((delivery) => {
+        const deliveryUserUid = delivery.address?.userUid || order.userId;
+        const userForThisDelivery = users.find((u) => u.uid === deliveryUserUid);
+        let availableAddresses: Address[] = [
+          ...(userForThisDelivery?.addresses || clientSavedAddresses),
+        ];
+        let addressWithUserUid: Address = delivery.address || {
+          placeId: "",
+          description: "",
+          latitude: 0,
+          longitude: 0,
+        };
+        if (delivery.address?.placeId) {
+          const addressExists = availableAddresses.some(
+            (addr) => addr.placeId === delivery.address?.placeId
+          );
+          if (!addressExists) {
+            availableAddresses = [delivery.address, ...availableAddresses];
+          }
+        }
+        addressWithUserUid = {
+          ...addressWithUserUid,
+          userUid: deliveryUserUid,
+        };
+        return {
+          ...delivery,
+          address: addressWithUserUid,
+          availableAddresses,
+        };
+      });
+      setEditedDeliveries(original);
+    }
   };
 
   const handleSave = async (options?: { silent?: boolean }): Promise<boolean> => {
@@ -214,67 +249,10 @@ export const useDeliveryEditor = (
     }
   };
 
-  const addDelivery = () => {
-    if (!order) return;
-
-    // 1. Buscar el primer producto que tenga la orden
-    const defaultProduct = order.items?.[0];
-    const defaultProductId = defaultProduct?.productId || "";
-    const defaultUnit = defaultProduct?.unit || "fundas";
-
-    // 2. Pre-vincular los datos del cliente de la orden
-    const clientSavedAddresses =
-      order.clientAddresses || (order as any).userAddresses || [];
-
-    const defaultAddress = clientSavedAddresses[0] || {
-      placeId: "",
-      description: "",
-      latitude: 0,
-      longitude: 0,
-      additionalInfo: "",
-      recipientName: `${order.userNames || ""} ${order.userLastNames || ""}`.trim(),
-      recipientDocument: (order as any).userDocument || "",
-      recipientDocumentType: (order as any).identificationType || "Cédula",
-      userUid: order.userId || "",
-    };
-
-    const newDelivery: OrderDelivery = {
-      id: generateTempDeliveryId(),
-      productId: defaultProductId,
-      address: {
-        ...defaultAddress,
-        userUid: order.userId || "",
-      },
-      availableAddresses: clientSavedAddresses,
-      quantity: 0,
-      unit: defaultUnit,
-      delivered: false,
-    };
-
-    setEditedDeliveries((prev) => {
-      const nextDeliveries = [...prev, newDelivery];
-      return redistributeEquitably(nextDeliveries, order);
-    });
-  };
-  
   const updateDelivery = (id: string, values: Partial<OrderDelivery>) => {
     setEditedDeliveries((prev) =>
       prev.map((del) => (del.id === id ? { ...del, ...values } : del))
     );
-  };
-
-  const removeDelivery = (id: string) => {
-    if (editedDeliveries.length <= 1) {
-      showAlert({
-        message: "Debe haber al menos una entrega.",
-        type: "warning",
-      });
-      return;
-    }
-    setEditedDeliveries((prev) => {
-      const nextDeliveries = prev.filter((del) => del.id !== id);
-      return redistributeEquitably(nextDeliveries, order);
-    });
   };
 
   const handleUserSelection = (userId: string, deliveryId: string) => {
@@ -326,9 +304,7 @@ export const useDeliveryEditor = (
     handleEdit,
     handleSave,
     handleCancel,
-    addDelivery,
     updateDelivery,
-    removeDelivery,
     handleUserSelection,
     isAddingNewAddress,
     setIsAddingNewAddress,

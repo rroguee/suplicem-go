@@ -14,9 +14,7 @@ interface DeliveriesSectionProps {
   editedDeliveryType: string;
   editedDeliveries: OrderDelivery[];
   productOptions: { label: string; value: string }[];
-  onAddDelivery: () => void;
   onUpdateDelivery: (id: string, values: Partial<OrderDelivery>) => void;
-  onRemoveDelivery: (id: string) => void;
   onUserSelection: (userId: string, deliveryId: string) => void;
   onOpenNewAddressModal: () => void;
 }
@@ -28,9 +26,7 @@ export const DeliveriesSection: React.FC<DeliveriesSectionProps> = ({
   editedDeliveryType,
   editedDeliveries,
   productOptions,
-  onAddDelivery,
   onUpdateDelivery,
-  onRemoveDelivery,
   onUserSelection,
   onOpenNewAddressModal,
 }) => {
@@ -81,11 +77,11 @@ export const DeliveriesSection: React.FC<DeliveriesSectionProps> = ({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Entregas</Text>
+      <Text style={styles.sectionTitle}>Dirección de Entrega</Text>
 
       <View style={styles.deliveriesContainer}>
         {isEditing && editedDeliveryType === "domicilio" ? (
-          editedDeliveries.map((delivery, idx) => (
+          editedDeliveries.slice(0, 1).map((delivery, idx) => (
             <DeliveryEditCard
               key={delivery.id || `delivery-edit-${idx}`}
               delivery={delivery}
@@ -93,12 +89,10 @@ export const DeliveriesSection: React.FC<DeliveriesSectionProps> = ({
               clientName={`${order.userNames || ""} ${order.userLastNames || ""}`.trim() || "Cliente de la orden"}
               productOptions={productOptions}
               onUpdateDelivery={onUpdateDelivery}
-              onRemoveDelivery={onRemoveDelivery}
-              canRemove={editedDeliveries.length > 1}
             />
           ))
         ) : (
-          (order.deliveries || []).map((delivery, idx) => (
+          (order.deliveries || []).slice(0, 1).map((delivery, idx) => (
             <DeliveryViewCard
               key={delivery.id || `delivery-view-${idx}`}
               delivery={delivery}

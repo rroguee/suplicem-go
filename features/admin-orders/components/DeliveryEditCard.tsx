@@ -11,8 +11,6 @@ interface DeliveryEditCardProps {
   clientName: string;
   productOptions: { label: string; value: string }[];
   onUpdateDelivery: (id: string, values: Partial<DeliveryDetail>) => void;
-  onRemoveDelivery?: (id: string) => void;
-  canRemove?: boolean;
 }
 
 export const DeliveryEditCard: React.FC<DeliveryEditCardProps> = ({
@@ -21,21 +19,11 @@ export const DeliveryEditCard: React.FC<DeliveryEditCardProps> = ({
   clientName,
   productOptions,
   onUpdateDelivery,
-  onRemoveDelivery,
-  canRemove = false,
 }) => {
   return (
     <View style={styles.deliveryCard}>
       <View style={styles.headerRow}>
-        <Text style={styles.deliveryCardTitle}>Entrega #{index + 1}</Text>
-        {canRemove && onRemoveDelivery && (
-          <TouchableOpacity
-            onPress={() => onRemoveDelivery(delivery.id)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="trash-outline" size={18} color="#EF4444" />
-          </TouchableOpacity>
-        )}
+        <Text style={styles.deliveryCardTitle}>Punto de Entrega</Text>
       </View>
 
       {/* Usuario Destinatario (Fijo al cliente de la orden) */}
