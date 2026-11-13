@@ -154,3 +154,17 @@ export const splitSingleTrip = async (
   };
 };
 
+export const getTripDirections = async (
+  originLat: number,
+  originLng: number,
+  destLat: number,
+  destLng: number
+) => {
+  return await safeRequest(() =>
+    protectedApi.get("/trips/directions", {
+      params: { originLat, originLng, destLat, destLng },
+    })
+  );
+};
+
+

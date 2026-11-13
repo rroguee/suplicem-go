@@ -2,6 +2,7 @@ import React from "react";
 import { Image, StyleSheet, View, Text, Platform } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "@/components/MapViewWrapper";
 import { calculateTripEstimate, WAREHOUSE_LOCATION } from "@/utils/tripEstimate";
+import { useTripRoute } from "@/hooks/useTripRoute";
 
 type DriverTripMapProps = {
   location?: { latitude: number; longitude: number } | null;
@@ -54,6 +55,8 @@ export const DriverTripMap: React.FC<DriverTripMapProps> = ({
     ? calculateTripEstimate(originCoords, destCoords)
     : null;
 
+  const { routeCoordinates, roadEstimate } = useTripRoute({ originCoords, destCoords });
+
   const initialLatitude = originCoords.latitude;
   const initialLongitude = originCoords.longitude;
 
@@ -66,7 +69,11 @@ export const DriverTripMap: React.FC<DriverTripMapProps> = ({
         <View style={styles.estimateBanner}>
           <View style={styles.estimateHeader}>
             <Text style={styles.estimateTitle}>⏱️ Tiempo estimado de trayecto:</Text>
-            <Text style={styles.estimateValue}>{estimate.formattedText}</Text>
+            <Text style={styles.estimateValue}>
+              {roadEstimate
+                ? `${roadEstimate.formattedDuration} (${roadEstimate.formattedDistance})`
+                : estimate.formattedText}
+            </Text>
           </View>
           <Text style={styles.estimateRouteText}>
             🏢 Partida: {hasValidDriverLocation ? "Ubicación del camión" : WAREHOUSE_LOCATION.name}
@@ -134,18 +141,33 @@ export const DriverTripMap: React.FC<DriverTripMapProps> = ({
           })
         )}
 
-        {/* Línea de Ruta de Partida a Llegada */}
-        {destCoords && isValidCoord(destCoords.latitude, destCoords.longitude) && (
+        {/* Trazo Vial Estilo Uber con Recorte Dinámico */}
+        {routeCoordinates.length > 1 ? (
+          <>
+            {/* Capa 1: Sombra / Borde exterior */}
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeColor="#1E3A8A"
+              strokeWidth={7}
+            />
+            {/* Capa 2: Línea central activa */}
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeColor="#2563EB"
+              strokeWidth={4}
+            />
+          </>
+        ) : destCoords && isValidCoord(destCoords.latitude, destCoords.longitude) ? (
           <Polyline
             coordinates={[
               { latitude: originCoords.latitude, longitude: originCoords.longitude },
               { latitude: destCoords.latitude, longitude: destCoords.longitude },
             ]}
-            strokeColor="#E31E24"
-            strokeWidth={4}
+            strokeColor="#2563EB"
+            strokeWidth={3}
             lineDashPattern={[5, 5]}
           />
-        )}
+        ) : null}
       </MapView>
 
       {!hasValidDriverLocation && (

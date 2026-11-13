@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, Image, Platform } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "@/components/MapViewWrapper";
 import { calculateTripEstimate, WAREHOUSE_LOCATION } from "@/utils/tripEstimate";
+import { useTripRoute } from "@/hooks/useTripRoute";
 
 interface ClientOrderMapProps {
   driverLocation: { latitude: number; longitude: number } | null;
@@ -32,6 +33,8 @@ export const ClientOrderMap: React.FC<ClientOrderMapProps> = ({
     ? calculateTripEstimate(originCoords, destCoords)
     : null;
 
+  const { routeCoordinates, roadEstimate } = useTripRoute({ originCoords, destCoords });
+
   const shouldShowMap =
     Boolean(destCoords) &&
     (Boolean(driverLocation) ||
@@ -53,7 +56,11 @@ export const ClientOrderMap: React.FC<ClientOrderMapProps> = ({
         <View style={styles.estimateBanner}>
           <View style={styles.estimateHeader}>
             <Text style={styles.estimateTitle}>⏱️ Tiempo estimado de llegada:</Text>
-            <Text style={styles.estimateValue}>{estimate.formattedText}</Text>
+            <Text style={styles.estimateValue}>
+              {roadEstimate
+                ? `${roadEstimate.formattedDuration} (${roadEstimate.formattedDistance})`
+                : estimate.formattedText}
+            </Text>
           </View>
           <Text style={styles.estimateRouteText}>
             🏢 Partida: {driverLocation ? "Camión en camino" : WAREHOUSE_LOCATION.name}
@@ -107,18 +114,33 @@ export const ClientOrderMap: React.FC<ClientOrderMapProps> = ({
           />
         )}
 
-        {/* Línea de ruta entre Partida y Llegada */}
-        {destCoords && (
+        {/* Trazo Vial Estilo Uber con Recorte Dinámico */}
+        {routeCoordinates.length > 1 ? (
+          <>
+            {/* Capa 1: Sombra / Borde exterior */}
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeColor="#1E3A8A"
+              strokeWidth={7}
+            />
+            {/* Capa 2: Línea central activa */}
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeColor="#2563EB"
+              strokeWidth={4}
+            />
+          </>
+        ) : destCoords ? (
           <Polyline
             coordinates={[
               { latitude: originCoords.latitude, longitude: originCoords.longitude },
               { latitude: destCoords.latitude, longitude: destCoords.longitude },
             ]}
-            strokeColor="#E31E24"
-            strokeWidth={4}
+            strokeColor="#2563EB"
+            strokeWidth={3}
             lineDashPattern={[5, 5]}
           />
-        )}
+        ) : null}
       </MapView>
     </View>
   );
