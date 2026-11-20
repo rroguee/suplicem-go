@@ -24,6 +24,9 @@ export const RegisterAddressSection: React.FC<RegisterAddressSectionProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Direcciones</Text>
+      {errors.addresses && !Array.isArray(errors.addresses) && (
+        <Text style={styles.error}>{(errors.addresses as any)?.message}</Text>
+      )}
 
       {addresses.map((addr, index) => (
         <View key={index} style={styles.addressItem}>

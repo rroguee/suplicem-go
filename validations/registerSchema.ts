@@ -8,29 +8,6 @@ const validateNameNoNumbersOrBinary = (value: string | undefined) => {
   return /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/.test(value);
 };
 
-const addressItemSchema = z.object({
-  description: z.string().min(1, "La dirección es requerida"),
-  latitude: z.number({ invalid_type_error: "Latitud requerida" }),
-  longitude: z.number({ invalid_type_error: "Longitud requerida" }),
-  additionalInfo: z.string().optional().default(""),
-});
-
-const vehicleSchema = z.object({
-  brand: z.string().min(1, "Marca requerida"),
-  model: z.string().min(1, "Modelo requerido"),
-  year: z
-    .number({ invalid_type_error: "Año debe ser un número" })
-    .min(1990, "Año inválido")
-    .max(new Date().getFullYear(), "Año inválido"),
-  tons: z
-    .number({ invalid_type_error: "Toneladas debe ser un número" })
-    .positive("Debe ser mayor a 0")
-    .max(100, "¿Seguro que más de 100 toneladas?"),
-  plateNumber: z
-    .string()
-    .regex(/^[A-Z0-9]{6,8}$/i, "Placa inválida (6-8 caracteres alfanuméricos)"),
-});
-
 export const registerSchema = z
   .object({
     registerMethod: z.enum(["email", "phone"]).default("email"),
@@ -46,8 +23,8 @@ export const registerSchema = z
     lastNames: z.string().optional().default(""),
     phone: z.string().optional().default(""),
     userType: z.string().min(1, "Tipo de usuario requerido"),
-    addresses: z.array(addressItemSchema).optional().default([]),
-    vehicle: vehicleSchema.optional(),
+    addresses: z.array(z.any()).optional().default([]),
+    vehicle: z.any().optional(),
   })
   .superRefine((data, ctx) => {
     // 1. Validaciones para persona jurídica
@@ -192,15 +169,56 @@ export const registerSchema = z
           message: "Debe agregar al menos una dirección",
           code: z.ZodIssueCode.custom,
         });
+      } else {
+        data.addresses.forEach((addr: any, idx: number) => {
+          if (!addr?.description || addr.description.trim() === "") {
+            ctx.addIssue({
+              path: ["addresses", idx, "description"],
+              message: "La dirección es requerida",
+              code: z.ZodIssueCode.custom,
+            });
+          }
+        });
       }
     }
 
-    // 5. Vehículo para chofer
+    // 5. Vehículo para chofer (solo si userType es driver)
     if (data.userType === "driver") {
-      if (!data.vehicle) {
+      const veh = data.vehicle || {};
+      if (!veh.brand || String(veh.brand).trim() === "") {
         ctx.addIssue({
-          path: ["vehicle"],
-          message: "Datos del vehículo requeridos",
+          path: ["vehicle", "brand"],
+          message: "Marca requerida",
+          code: z.ZodIssueCode.custom,
+        });
+      }
+      if (!veh.model || String(veh.model).trim() === "") {
+        ctx.addIssue({
+          path: ["vehicle", "model"],
+          message: "Modelo requerido",
+          code: z.ZodIssueCode.custom,
+        });
+      }
+      const numYear = Number(veh.year);
+      if (!numYear || numYear < 1990 || numYear > new Date().getFullYear()) {
+        ctx.addIssue({
+          path: ["vehicle", "year"],
+          message: "Año inválido",
+          code: z.ZodIssueCode.custom,
+        });
+      }
+      const numTons = Number(veh.tons);
+      if (!numTons || numTons <= 0 || numTons > 100) {
+        ctx.addIssue({
+          path: ["vehicle", "tons"],
+          message: "Toneladas debe ser mayor a 0 y menor a 100",
+          code: z.ZodIssueCode.custom,
+        });
+      }
+      if (!veh.plateNumber || !/^[A-Z0-9]{6,8}$/i.test(String(veh.plateNumber).trim())) {
+        ctx.addIssue({
+          path: ["vehicle", "plateNumber"],
+          message: "Placa inválida (6-8 caracteres alfanuméricos)",
           code: z.ZodIssueCode.custom,
         });
       }

@@ -21,9 +21,11 @@ import { RegisterDriverFields } from "./components/RegisterDriverFields";
 import { RegisterAccountTypeFields } from "./components/RegisterAccountTypeFields";
 import { PhoneCodeModal } from "./components/PhoneCodeModal";
 import { Ionicons } from "@expo/vector-icons";
+import { useAlert } from "@/context/alertContext";
 
 export const RegisterScreen: React.FC = () => {
   const router = useRouter();
+  const { showAlert } = useAlert();
   const {
     control,
     handleSubmit,
@@ -170,7 +172,18 @@ export const RegisterScreen: React.FC = () => {
       <TouchableOpacity
         style={styles.button}
         onPress={() => {
-          void handleSubmit(onSubmit)();
+          void handleSubmit(onSubmit, (fieldErrors) => {
+            const firstKey = Object.keys(fieldErrors)[0];
+            const firstErr = fieldErrors[firstKey as keyof typeof fieldErrors];
+            const msg =
+              (firstErr as any)?.message ||
+              (firstErr as any)?.[0]?.description?.message ||
+              "Por favor completa los campos requeridos del formulario.";
+            showAlert({
+              message: typeof msg === "string" ? msg : "Por favor completa los campos requeridos.",
+              type: "warning",
+            });
+          })();
         }}
       >
         <Text style={styles.buttonText}>
