@@ -32,12 +32,18 @@ export const useClientCart = () => {
   const hasAssignedSeller = Boolean(assistedClient ? assistedClient.sellerId : user?.sellerId);
 
   const [reference, setReference] = useState("");
-  const [selectedAddress, setSelectedAddress] = useState<Address | null>(
-    targetUser?.addresses && targetUser.addresses.length > 0 ? targetUser.addresses[0] : null
+  const hasSaved = Boolean(targetUser?.addresses && targetUser.addresses.length > 0);
+  const [addressTab, setAddressTab] = useState<"saved" | "new">(hasSaved ? "saved" : "new");
+  const [selectedSavedAddress, setSelectedSavedAddress] = useState<Address | null>(
+    hasSaved ? targetUser!.addresses![0] : null
   );
+  const [customAddress, setCustomAddress] = useState<Address | null>(null);
   const [customAddressText, setCustomAddressText] = useState("");
   const [customAdditionalInfo, setCustomAdditionalInfo] = useState("");
   const [saveAddressToProfile, setSaveAddressToProfile] = useState(false);
+
+  // Dirección efectiva según la pestaña activa
+  const selectedAddress = addressTab === "saved" ? selectedSavedAddress : customAddress;
 
   const [paymentMethod, setPaymentMethod] = useState<"transfer" | "credit">("transfer");
   const [bankAccountsList, setBankAccountsList] = useState<BankAccount[]>([]);
@@ -105,7 +111,7 @@ export const useClientCart = () => {
       fetchAccounts();
 
       if (targetUser?.addresses && targetUser.addresses.length > 0) {
-        setSelectedAddress((current) => current || targetUser.addresses![0]);
+        setSelectedSavedAddress((current) => current || targetUser.addresses![0]);
       }
     }, [fetchAccounts])
   );
@@ -113,7 +119,7 @@ export const useClientCart = () => {
   const selectedBank = bankAccountsList.find((b) => b.id === selectedBankId) || bankAccountsList[0];
 
   const handleSelectAddress = (address: Address) => {
-    setSelectedAddress(address);
+    setSelectedSavedAddress(address);
   };
 
   const handleCustomPlaceSelected = (place: any) => {
@@ -126,15 +132,15 @@ export const useClientCart = () => {
         longitude: place.longitude ?? 0,
         additionalInfo: customAdditionalInfo.trim(),
       };
-      setSelectedAddress(newAddr);
+      setCustomAddress(newAddr);
     }
   };
 
   const handleCustomAdditionalInfoChange = (text: string) => {
     setCustomAdditionalInfo(text);
-    if (selectedAddress) {
-      setSelectedAddress({
-        ...selectedAddress,
+    if (customAddress) {
+      setCustomAddress({
+        ...customAddress,
         additionalInfo: text.trim(),
       });
     }
@@ -325,6 +331,8 @@ export const useClientCart = () => {
     reference,
     setReference,
     selectedAddress,
+    addressTab,
+    setAddressTab,
     customAddressText,
     setCustomAddressText,
     customAdditionalInfo,

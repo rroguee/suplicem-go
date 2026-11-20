@@ -103,9 +103,35 @@ export const useAddressPicker = ({
           };
         }
       } catch (e) {
-        console.log("Error forward geocoding:", e);
+        console.log("Error forward geocoding Google:", e);
       }
     }
+
+    try {
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+        text + ", República Dominicana"
+      )}&format=json&addressdetails=1&limit=1`;
+      const nomRes = await fetch(nominatimUrl, {
+        headers: {
+          "User-Agent": "SuplicemApp/1.0 (contact@suplicem.com)",
+          "Accept-Language": "es",
+        },
+      });
+      if (nomRes.ok) {
+        const nomJson = await nomRes.json();
+        if (Array.isArray(nomJson) && nomJson.length > 0) {
+          const first = nomJson[0];
+          return {
+            latitude: parseFloat(first.lat) || 0,
+            longitude: parseFloat(first.lon) || 0,
+            description: cleanFormattedAddress(first.display_name),
+          };
+        }
+      }
+    } catch (e) {
+      console.log("Error forward geocoding Nominatim:", e);
+    }
+
     return null;
   };
 
@@ -229,11 +255,22 @@ export const useAddressPicker = ({
     setQuery(finalDescription);
 
     if (item.isExact || !item.isGoogle) {
+      let lat = item.latitude || 0;
+      let lng = item.longitude || 0;
+
+      if (item.isExact && (!lat || !lng)) {
+        const geo = await forwardGeocodeText(finalDescription);
+        if (geo) {
+          lat = geo.latitude;
+          lng = geo.longitude;
+        }
+      }
+
       onPlaceSelected({
         placeId: item.id || createPlaceId("loc"),
         description: finalDescription,
-        latitude: item.latitude || 0,
-        longitude: item.longitude || 0,
+        latitude: lat,
+        longitude: lng,
       });
       sessionTokenRef.current = "";
       return;

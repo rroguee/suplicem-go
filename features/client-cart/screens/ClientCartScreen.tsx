@@ -33,6 +33,8 @@ export const ClientCartScreen: React.FC = () => {
     reference,
     setReference,
     selectedAddress,
+    addressTab,
+    setAddressTab,
     customAddressText,
     setCustomAddressText,
     customAdditionalInfo,
@@ -131,6 +133,8 @@ export const ClientCartScreen: React.FC = () => {
                 onCustomPlaceSelected={handleCustomPlaceSelected}
                 saveAddressToProfile={saveAddressToProfile}
                 onToggleSaveAddress={setSaveAddressToProfile}
+                addressTab={addressTab}
+                onAddressTabChange={setAddressTab}
               />
 
               <CartPaymentSection

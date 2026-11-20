@@ -26,6 +26,8 @@ type CartDeliverySectionProps = {
   onCustomPlaceSelected: (place: any) => void;
   saveAddressToProfile: boolean;
   onToggleSaveAddress: (save: boolean) => void;
+  addressTab: "saved" | "new";
+  onAddressTabChange: (tab: "saved" | "new") => void;
 };
 
 export const CartDeliverySection: React.FC<CartDeliverySectionProps> = ({
@@ -41,11 +43,11 @@ export const CartDeliverySection: React.FC<CartDeliverySectionProps> = ({
   onCustomPlaceSelected,
   saveAddressToProfile,
   onToggleSaveAddress,
+  addressTab,
+  onAddressTabChange,
 }) => {
   const hasSavedAddresses = userAddresses && userAddresses.length > 0;
-  const [activeTab, setActiveTab] = useState<"saved" | "new">(
-    hasSavedAddresses ? "saved" : "new"
-  );
+  const activeTab = addressTab;
 
   return (
     <View style={styles.container}>
@@ -71,7 +73,7 @@ export const CartDeliverySection: React.FC<CartDeliverySectionProps> = ({
                   styles.tabButton,
                   activeTab === "saved" && styles.tabButtonActive,
                 ]}
-                onPress={() => setActiveTab("saved")}
+                onPress={() => onAddressTabChange("saved")}
               >
                 <Ionicons
                   name="home-outline"
@@ -93,7 +95,7 @@ export const CartDeliverySection: React.FC<CartDeliverySectionProps> = ({
                   styles.tabButton,
                   activeTab === "new" && styles.tabButtonActive,
                 ]}
-                onPress={() => setActiveTab("new")}
+                onPress={() => onAddressTabChange("new")}
               >
                 <Ionicons
                   name="add-circle-outline"
