@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useAlert } from "@/context/alertContext";
 import { useLoading } from "@/context/loadingContext";
-import { getOrderDetail, approveOrder } from "@/services/orderService";
+import { getOrderDetail, approveOrder, getOrderDispatchPlan } from "@/services/orderService";
 import { splitOrderTrips } from "@/services/tripsService";
 import { getUsers } from "@/services/userService";
 import { Order } from "@/types/orders";
@@ -77,55 +77,25 @@ export function useOrderApprovalPlanner(orderId: string) {
               },
             ];
 
-        const orderTotalTons = Number(orderData.totalTons || orderData.pendingBalance) || 0;
-        const rawEstimatedTons = rawDeliveries.map((del) => {
-          const qty = Number(del.quantity) || 0;
-          const matchedItem = orderData.items?.find((i) => i.productId === del.productId);
-          const weightKg = del.weightKg || matchedItem?.weightKg || 42.5;
-          return (qty * weightKg) / 1000;
-        });
-        const totalEstimated = rawEstimatedTons.reduce((sum, t) => sum + t, 0);
-
-        let accumulatedTons = 0;
-        const initialPlan: DeliveryPlanState[] = rawDeliveries.map((del, idx) => {
-          const qtyFundas = Number(del.quantity) || 0;
-          let tons: number;
-          if (orderTotalTons > 0) {
-            if (idx === rawDeliveries.length - 1) {
-              tons = Number(Math.max(0, orderTotalTons - accumulatedTons).toFixed(2));
-            } else if (totalEstimated > 0) {
-              tons = Number(((rawEstimatedTons[idx] / totalEstimated) * orderTotalTons).toFixed(2));
-            } else {
-              tons = Number((orderTotalTons / rawDeliveries.length).toFixed(2));
-            }
-            accumulatedTons += tons;
-          } else {
-            tons = Number(rawEstimatedTons[idx].toFixed(2));
-          }
-
-          const addressDesc = del.address?.description || "Dirección de orden";
-          const truckCount = Math.max(1, Math.ceil(tons / 21));
-          const tonsPerTruck = Number((tons / truckCount).toFixed(2));
-
-          const trucks: TruckTripItem[] = Array.from({ length: truckCount }, (_, tIdx) => ({
-            id: `truck-${idx}-${tIdx}-${Date.now()}`,
-            totalTons: tIdx === truckCount - 1 ? Number((tons - tonsPerTruck * (truckCount - 1)).toFixed(2)) : tonsPerTruck,
-            deliveryId: del.id,
-          }));
-
-          return {
-            id: del.id,
-            index: idx,
-            addressDescription: addressDesc,
-            recipientName: del.address?.recipientName,
-            destinationAddress: del.address,
-            quantityFundas: qtyFundas,
-            totalTons: tons,
-            trucks,
-          };
-        });
-
-        setDeliveriesPlan(initialPlan);
+        // Consultar el plan oficial precalculado por el backend
+        const planRes = await getOrderDispatchPlan(orderId);
+        if (planRes?.success && planRes?.plan?.deliveries) {
+          setDeliveriesPlan(planRes.plan.deliveries);
+        } else {
+          // Fallback seguro de contingencia
+          setDeliveriesPlan(
+            rawDeliveries.map((del, idx) => ({
+              id: del.id,
+              index: idx,
+              addressDescription: del.address?.description || "Dirección de orden",
+              recipientName: del.address?.recipientName,
+              destinationAddress: del.address,
+              quantityFundas: Number(del.quantity) || 0,
+              totalTons: 0,
+              trucks: [{ id: `truck-${idx}-0-${Date.now()}`, totalTons: 0, deliveryId: del.id }],
+            }))
+          );
+        }
       } catch (err: any) {
         console.error("Error al cargar orden para aprobación:", err);
         showAlert({ message: "No se pudo cargar la orden.", type: "error" });

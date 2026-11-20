@@ -379,3 +379,16 @@ export const updateOrderDeliveries = async (
     message: result.message || "Error al guardar las entregas.",
   };
 };
+
+export const getOrderDispatchPlan = async (orderId: string) => {
+  const result = await safeRequest(() =>
+    protectedApi.get(`/orders/${orderId}/dispatch-plan`)
+  );
+  if (result.success && result.data) {
+    return result.data;
+  }
+  return {
+    success: false,
+    message: result.message || "Error al obtener el plan de despacho",
+  };
+};

@@ -308,13 +308,11 @@ export const useAdminOrderDetail = (orderId?: string) => {
       ),
     [allTrips, currentOrder?.id]
   );
-  const activeTrips = orderTrips.filter((t) =>
-    ["available", "assigned", "accepted", "started", "in_progress"].includes(String(t.status || "").toLowerCase())
+  // Balance oficial autorizado directamente por el backend
+  const availableToDispatch = Number(
+    currentOrder?.pendingBalance ??
+    Math.max(0, (Number(currentOrder?.totalTons) || 0) - (Number(currentOrder?.deliveredTons) || 0))
   );
-  const tonsInTransit = activeTrips.reduce((sum, t) => sum + (Number(t.totalTons) || 0), 0);
-  const alreadyDelivered = Number(currentOrder?.deliveredTons) || 0;
-  const orderTotalTons = Number(currentOrder?.totalTons || currentOrder?.pendingBalance) || 0;
-  const availableToDispatch = Math.max(0, orderTotalTons - alreadyDelivered - tonsInTransit);
 
   const [isDispatching, setIsDispatching] = useState(false);
 

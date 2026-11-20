@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { useRouter } from "expo-router";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthContext } from "@/context/authContext";
 import { useAlert } from "@/context/alertContext";
 import { useLoading } from "@/context/loadingContext";
@@ -30,7 +30,7 @@ export const useRegister = () => {
     reset,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: yupResolver(registerSchema) as any,
+    resolver: zodResolver(registerSchema) as any,
     defaultValues: {
       registerMethod: "email",
       personType: "fisica",
