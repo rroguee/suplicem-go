@@ -1,0 +1,157 @@
+import { StyleSheet } from "react-native";
+
+export const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  container: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: "85%",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#0F294A",
+  },
+  subtitle: {
+    fontSize: 13,
+    color: "#C2410C",
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  countRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  countLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#334155",
+  },
+  counterControl: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  counterBtn: {
+    backgroundColor: "#E2E8F0",
+    padding: 6,
+    borderRadius: 6,
+  },
+  counterBtnDisabled: {
+    opacity: 0.4,
+  },
+  counterValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#0F294A",
+  },
+  tripsList: {
+    maxHeight: 320,
+    marginBottom: 14,
+  },
+  tripCard: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+  },
+  tripCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  tripCardTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#0F294A",
+  },
+  tripBagsText: {
+    fontSize: 12,
+    color: "#64748B",
+    fontWeight: "600",
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    color: "#475569",
+    width: 80,
+  },
+  tonInput: {
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    width: 80,
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#0F294A",
+    backgroundColor: "#F8FAFC",
+  },
+  unitSuffix: {
+    fontSize: 13,
+    color: "#64748B",
+    marginLeft: 6,
+    fontWeight: "bold",
+  },
+  driverBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F1F5F9",
+    padding: 8,
+    borderRadius: 6,
+  },
+  driverBtnText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#1E293B",
+    fontWeight: "500",
+  },
+  warnText: {
+    fontSize: 11,
+    color: "#DC2626",
+    marginTop: 4,
+    fontWeight: "500",
+  },
+  submitBtn: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#166534",
+    paddingVertical: 14,
+    borderRadius: 10,
+    gap: 8,
+  },
+  btnDisabled: {
+    opacity: 0.6,
+  },
+  submitBtnText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "bold",
+  },
+});

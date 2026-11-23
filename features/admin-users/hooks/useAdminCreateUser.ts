@@ -4,6 +4,7 @@ import { useAlert } from "@/context/alertContext";
 import { useLoading } from "@/context/loadingContext";
 import { createUserAccountByAdmin } from "@/services/userService";
 import { VehicleData } from "../components/AdminUserVehicleFields";
+import { Address } from "@/types/users";
 
 const INITIAL_VEHICLE: VehicleData = {
   brand: "Toyota",
@@ -22,7 +23,7 @@ export function useAdminCreateUser() {
   const [userType, setUserType] = useState<"client" | "driver" | "admin" | "seller">("client");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [clientAddress, setClientAddress] = useState<any>(null);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [vehicle, setVehicle] = useState<VehicleData>(INITIAL_VEHICLE);
 
   const { user: authUser } = useContext(AuthContext);
@@ -32,6 +33,33 @@ export function useAdminCreateUser() {
 
   const { show, hide } = useLoading();
   const { showAlert } = useAlert();
+
+  const addAddress = () => {
+    setAddresses((prev) => [
+      ...prev,
+      { placeId: "", description: "", latitude: 0, longitude: 0, additionalInfo: "" },
+    ]);
+  };
+
+  const removeAddress = (index: number) => {
+    setAddresses((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateAddressPlace = (index: number, place: any) => {
+    setAddresses((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], ...place };
+      return next;
+    });
+  };
+
+  const updateAddressInfo = (index: number, additionalInfo: string) => {
+    setAddresses((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], additionalInfo };
+      return next;
+    });
+  };
 
   const updateVehicle = (updated: Partial<VehicleData>) => {
     setVehicle((prev) => ({ ...prev, ...updated }));
@@ -45,7 +73,7 @@ export function useAdminCreateUser() {
     setPhone("");
     setPassword("");
     setUserType("client");
-    setClientAddress(null);
+    setAddresses([]);
     setVehicle(INITIAL_VEHICLE);
   };
 
@@ -103,8 +131,11 @@ export function useAdminCreateUser() {
       sellerId: isSeller ? authUser?.uid : undefined,
     };
 
-    if (userType === "client" && clientAddress?.description) {
-      payload.addresses = [clientAddress];
+    if (userType === "client") {
+      const validAddresses = addresses.filter((a) => a.description && a.placeId);
+      if (validAddresses.length > 0) {
+        payload.addresses = validAddresses;
+      }
     }
 
     if (userType === "driver") {
@@ -162,8 +193,11 @@ export function useAdminCreateUser() {
     setPassword,
     showPassword,
     setShowPassword,
-    clientAddress,
-    setClientAddress,
+    addresses,
+    addAddress,
+    removeAddress,
+    updateAddressPlace,
+    updateAddressInfo,
     vehicle,
     updateVehicle,
     handleCreateUser,

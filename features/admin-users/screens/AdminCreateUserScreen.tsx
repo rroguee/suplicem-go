@@ -11,11 +11,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import AddressPicker from "@/components/AddressPicker";
 import CustomPickerModal from "@/components/CustomPickerModal";
 import { ActionSuccessModal } from "@/components/common/ActionSuccessModal";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { AdminUserVehicleFields } from "../components/AdminUserVehicleFields";
+import { AdminUserAddressesFields } from "../components/AdminUserAddressesFields";
 import { useAdminCreateUser } from "../hooks/useAdminCreateUser";
 
 const ROLE_OPTIONS = [
@@ -24,6 +24,13 @@ const ROLE_OPTIONS = [
   { label: "Conductor / Transportista", value: "driver" },
   { label: "Administrador", value: "admin" },
 ];
+
+const BUTTON_TEXT: Record<string, string> = {
+  driver: "Crear Conductor en Servidor",
+  admin: "Crear Administrador en Servidor",
+  seller: "Crear Vendedor en Servidor",
+  client: "Crear Cliente en Servidor",
+};
 
 export const AdminCreateUserScreen: React.FC = () => {
   const router = useRouter();
@@ -44,7 +51,11 @@ export const AdminCreateUserScreen: React.FC = () => {
     setPassword,
     showPassword,
     setShowPassword,
-    setClientAddress,
+    addresses,
+    addAddress,
+    removeAddress,
+    updateAddressPlace,
+    updateAddressInfo,
     vehicle,
     updateVehicle,
     handleCreateUser,
@@ -71,13 +82,8 @@ export const AdminCreateUserScreen: React.FC = () => {
         title={isSeller ? "Registrar Cliente" : "Crear Usuario"}
         showBack={true}
         onBack={() => {
-          if (router.canGoBack()) {
-            router.back();
-          } else if (isSeller) {
-            router.replace("/(protected)/(tabs)/(orders)");
-          } else {
-            router.replace("/(protected)/(tabs)/(settings)");
-          }
+          if (router.canGoBack()) return router.back();
+          router.replace(isSeller ? "/(protected)/(tabs)/(orders)" : "/(protected)/(tabs)/(settings)");
         }}
         style={{ marginBottom: 16 }}
       />
@@ -174,10 +180,13 @@ export const AdminCreateUserScreen: React.FC = () => {
       </View>
 
       {userType === "client" && (
-        <View style={styles.sectionContainer}>
-          <Text style={styles.label}>Dirección Inicial de Entrega (Opcional)</Text>
-          <AddressPicker onPlaceSelected={(place) => setClientAddress(place)} />
-        </View>
+        <AdminUserAddressesFields
+          addresses={addresses}
+          onAddAddress={addAddress}
+          onRemoveAddress={removeAddress}
+          onUpdatePlace={updateAddressPlace}
+          onUpdateInfo={updateAddressInfo}
+        />
       )}
 
       {userType === "driver" && (
@@ -185,15 +194,7 @@ export const AdminCreateUserScreen: React.FC = () => {
       )}
 
       <TouchableOpacity style={styles.button} onPress={handleCreateUser}>
-        <Text style={styles.buttonText}>
-          {userType === "driver"
-            ? "Crear Conductor en Servidor"
-            : userType === "admin"
-            ? "Crear Administrador en Servidor"
-            : userType === "seller"
-            ? "Crear Vendedor en Servidor"
-            : "Crear Cliente en Servidor"}
-        </Text>
+        <Text style={styles.buttonText}>{BUTTON_TEXT[userType] || "Crear Usuario"}</Text>
       </TouchableOpacity>
       </ScrollView>
 
@@ -244,10 +245,6 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     color: "#92400E",
     fontWeight: "500",
-  },
-  sectionContainer: {
-    marginTop: 6,
-    marginBottom: 12,
   },
   label: {
     fontSize: 14,

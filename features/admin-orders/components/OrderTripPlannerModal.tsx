@@ -1,19 +1,12 @@
 import React, { useState, useEffect } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  Alert,
-} from "react-native";
+import { Modal, View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { User } from "@/types/users";
 import { Trip } from "@/types/trips";
 import { Order } from "@/types/orders";
 import { DriverSelectionModal } from "./DriverSelectionModal";
+import { TripPlannerItemCard } from "./TripPlannerItemCard";
+import { styles } from "../styles/orderTripPlannerModal.styles";
 
 export interface PlannedTripItem {
   totalTons: number;
@@ -114,7 +107,6 @@ export const OrderTripPlannerModal: React.FC<OrderTripPlannerModalProps> = ({
     for (let i = 0; i < count; i++) {
       const tons = i === count - 1 ? Number((total - allocated).toFixed(2)) : tonsPerTrip;
       allocated += tons;
-      // Preservar el conductor existente si ya estaba en esa posición o el inicial
       const existingDriver =
         trips[i]?.driverId ||
         (i === 0 && initialDriverId ? initialDriverId : "") ||
@@ -128,7 +120,6 @@ export const OrderTripPlannerModal: React.FC<OrderTripPlannerModalProps> = ({
     }
     setTrips(newTrips);
   };
-
 
   const handleTripCountChange = (newCount: number) => {
     if (newCount < minTrips || newCount > maxTrips) return;
@@ -219,55 +210,18 @@ export const OrderTripPlannerModal: React.FC<OrderTripPlannerModalProps> = ({
 
           {/* Lista de viajes a planificar */}
           <ScrollView style={styles.tripsList} showsVerticalScrollIndicator={false}>
-            {trips.map((item, idx) => {
-              const assignedDriver = drivers.find((d) => d.uid === item.driverId);
-              const driverCap = Number(assignedDriver?.vehicle?.tons) || 0;
-              const isOverCap = driverCap > 0 && item.totalTons > driverCap;
-
-              return (
-                <View key={idx} style={styles.tripCard}>
-                  <View style={styles.tripCardHeader}>
-                    <Text style={styles.tripCardTitle}>Viaje #{idx + 1}</Text>
-                    {isAllCement && (
-                      <Text style={styles.tripBagsText}>
-                        ~{tonsToBags(item.totalTons).toLocaleString()} fundas
-                      </Text>
-                    )}
-                  </View>
-
-                  <View style={styles.inputRow}>
-                    <Text style={styles.fieldLabel}>Toneladas:</Text>
-                    <TextInput
-                      style={styles.tonInput}
-                      keyboardType="numeric"
-                      value={item.totalTons.toString()}
-                      onChangeText={(val) => handleUpdateTripTons(idx, val)}
-                    />
-                    <Text style={styles.unitSuffix}>t</Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.driverBtn}
-                    onPress={() => setActiveDriverPickerIndex(idx)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="person-outline" size={16} color="#0F294A" />
-                    <Text style={styles.driverBtnText} numberOfLines={1}>
-                      {assignedDriver
-                        ? `[${assignedDriver.driverCode || "COND"}] ${assignedDriver.names} ${assignedDriver.lastNames} (${driverCap} t)`
-                        : "Seleccionar Conductor"}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={16} color="#64748B" />
-                  </TouchableOpacity>
-
-                  {isOverCap && (
-                    <Text style={styles.warnText}>
-                      ⚠️ La carga supera la capacidad del camión ({driverCap} t).
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
+            {trips.map((item, idx) => (
+              <TripPlannerItemCard
+                key={idx}
+                index={idx}
+                item={item}
+                isAllCement={isAllCement}
+                tonsToBags={tonsToBags}
+                assignedDriver={drivers.find((d) => d.uid === item.driverId)}
+                onUpdateTons={handleUpdateTripTons}
+                onOpenDriverPicker={setActiveDriverPickerIndex}
+              />
+            ))}
           </ScrollView>
 
           <TouchableOpacity
@@ -299,159 +253,3 @@ export const OrderTripPlannerModal: React.FC<OrderTripPlannerModalProps> = ({
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  container: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: "85%",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#0F294A",
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#C2410C",
-    fontWeight: "600",
-    marginTop: 2,
-  },
-  countRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#F8FAFC",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 12,
-  },
-  countLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#334155",
-  },
-  counterControl: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  counterBtn: {
-    backgroundColor: "#E2E8F0",
-    padding: 6,
-    borderRadius: 6,
-  },
-  counterBtnDisabled: {
-    opacity: 0.4,
-  },
-  counterValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#0F294A",
-  },
-  tripsList: {
-    maxHeight: 320,
-    marginBottom: 14,
-  },
-  tripCard: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
-  },
-  tripCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  tripCardTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#0F294A",
-  },
-  tripBagsText: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: "600",
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    color: "#475569",
-    width: 80,
-  },
-  tonInput: {
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    width: 80,
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#0F294A",
-    backgroundColor: "#F8FAFC",
-  },
-  unitSuffix: {
-    fontSize: 13,
-    color: "#64748B",
-    marginLeft: 6,
-    fontWeight: "bold",
-  },
-  driverBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#F1F5F9",
-    padding: 8,
-    borderRadius: 6,
-  },
-  driverBtnText: {
-    flex: 1,
-    fontSize: 12,
-    color: "#1E293B",
-    fontWeight: "500",
-  },
-  warnText: {
-    fontSize: 11,
-    color: "#DC2626",
-    marginTop: 4,
-    fontWeight: "500",
-  },
-  submitBtn: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#166534",
-    paddingVertical: 14,
-    borderRadius: 10,
-    gap: 8,
-  },
-  btnDisabled: {
-    opacity: 0.6,
-  },
-  submitBtnText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "bold",
-  },
-});

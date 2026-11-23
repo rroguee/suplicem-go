@@ -75,16 +75,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#0F294A",
+    textAlign: "center",
   },
   profileEmail: {
     fontSize: 13,
     color: "#64748B",
     marginTop: 2,
+    textAlign: "center",
   },
   profilePhone: {
     fontSize: 13,
     color: "#64748B",
     marginTop: 1,
+    textAlign: "center",
   },
   badgeContainer: {
     flexDirection: "row",
