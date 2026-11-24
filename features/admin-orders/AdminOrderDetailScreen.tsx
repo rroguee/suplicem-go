@@ -18,7 +18,6 @@ import { AdminOrderHeader } from "./components/AdminOrderHeader";
 import { OrderFinancialSummary } from "./components/OrderFinancialSummary";
 import { OrderDispatchCard } from "./components/OrderDispatchCard";
 import { DeliveriesSection } from "./components/DeliveriesSection";
-import { DriverAssignmentCard } from "./components/DriverAssignmentCard";
 import { OrderTripsProgressCard } from "./components/OrderTripsProgressCard";
 import { PaymentReceiptCard } from "./components/PaymentReceiptCard";
 import { WarehousePickupCard } from "./components/WarehousePickupCard";
@@ -47,8 +46,6 @@ export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
     splitSpecificTrip,
     planAndSplitTrips,
     isDispatching,
-    selectedDriverId,
-    setSelectedDriverId,
     rejectModalVisible,
     setRejectModalVisible,
     viewReceiptModalVisible,
@@ -180,6 +177,7 @@ export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
           comments={currentOrder.comments}
           paymentMethod={currentOrder.paymentMethod}
           creditNote={currentOrder.creditNote}
+          bankReferenceNumber={currentOrder.bankReferenceNumber}
         />
 
         {/* 3. Conductor y vehículo asignado (si existe despacho) */}
@@ -232,18 +230,7 @@ export const AdminOrderDetailScreen: React.FC<AdminOrderDetailScreenProps> = ({
           />
         )}
 
-        {/* 8. Asignación de Conductor Específico para Aprobación Inicial */}
-        {isPendingOrRequested && !isEditing && isDelivery && (
-          <DriverAssignmentCard
-            order={currentOrder}
-            drivers={drivers}
-            allTrips={allTrips}
-            selectedDriverId={selectedDriverId}
-            onSelectDriver={setSelectedDriverId}
-          />
-        )}
-
-        {/* 9. Botones de Aprobación / Rechazo */}
+        {/* 8. Botones de Aprobación / Rechazo */}
         <AdminOrderActionButtons
           isEditing={isEditing}
           isPendingOrRequested={isPendingOrRequested}

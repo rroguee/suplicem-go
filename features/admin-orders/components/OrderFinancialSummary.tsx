@@ -10,6 +10,7 @@ interface OrderFinancialSummaryProps {
   comments?: string;
   paymentMethod?: "transfer" | "credit" | string;
   creditNote?: string;
+  bankReferenceNumber?: string;
 }
 
 export const OrderFinancialSummary: React.FC<OrderFinancialSummaryProps> = ({
@@ -17,6 +18,7 @@ export const OrderFinancialSummary: React.FC<OrderFinancialSummaryProps> = ({
   comments,
   paymentMethod,
   creditNote,
+  bankReferenceNumber,
 }) => {
   const totalItemsCount = (items || []).reduce(
     (acc, item) => acc + (Number(item.quantity) || 0),
@@ -73,6 +75,15 @@ export const OrderFinancialSummary: React.FC<OrderFinancialSummaryProps> = ({
         <Text style={styles.orderSummaryLabel}>Método de Pago:</Text>
         <Text style={styles.orderSummaryValueBold}>{paymentMethodLabel}</Text>
       </View>
+
+      {Boolean(bankReferenceNumber) && (
+        <View style={styles.orderSummaryRow}>
+          <Text style={styles.orderSummaryLabel}>No. de Comprobante:</Text>
+          <Text style={[styles.orderSummaryValueBold, { color: "#0F294A" }]}>
+            {bankReferenceNumber}
+          </Text>
+        </View>
+      )}
 
       {/* Solicitud de Pago a Crédito si aplica */}
       {isCredit && (

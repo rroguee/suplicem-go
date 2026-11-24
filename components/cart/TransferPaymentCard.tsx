@@ -122,6 +122,18 @@ export const TransferPaymentCard: React.FC<TransferPaymentCardProps> = ({
               <Text style={{ fontWeight: "bold" }}>{getHolder(selectedBank)}</Text>
             </Text>
           ) : null}
+          {selectedBank.routingNumber ? (
+            <Text style={styles.paymentDetailText}>
+              No. de Enrutamiento (ABA):{" "}
+              <Text style={{ fontWeight: "bold" }}>{selectedBank.routingNumber}</Text>
+            </Text>
+          ) : null}
+          {selectedBank.swiftCode ? (
+            <Text style={styles.paymentDetailText}>
+              Código SWIFT / BIC:{" "}
+              <Text style={{ fontWeight: "bold" }}>{selectedBank.swiftCode}</Text>
+            </Text>
+          ) : null}
         </View>
       ) : (
         <View style={[styles.bankInfoBox, { alignItems: "center", paddingVertical: 16 }]}>

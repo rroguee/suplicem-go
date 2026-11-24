@@ -44,6 +44,11 @@ export const OrderApprovalVerificationCard: React.FC<Props> = ({
           <Text style={styles.paymentValue}>
             {order.paymentMethod === "credit" ? "Pago a Crédito" : "Transferencia Bancaria"}
           </Text>
+          {Boolean(order.bankReferenceNumber) && (
+            <Text style={{ fontSize: 12, fontWeight: "600", color: "#2563EB", marginTop: 2 }}>
+              Ref. Bancaria: {order.bankReferenceNumber}
+            </Text>
+          )}
         </View>
 
         {hasReceipt && (

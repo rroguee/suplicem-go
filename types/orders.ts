@@ -53,6 +53,7 @@ export interface Order {
   createdAt: string;
   paymentMethod?: "transfer" | "credit";
   bankAccountId?: string;
+  bankReferenceNumber?: string;
   creditNote?: string;
   declineReason?: string;
   rejectionReason?: string;
