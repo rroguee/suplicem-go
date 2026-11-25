@@ -9,6 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { ORDER_PREFIX } from "@/constants/UserConstants";
 import { Order } from "@/types/orders";
+import { AssistedOrderBanner } from "./AssistedOrderBanner";
 
 interface AdminOrderHeaderProps {
   order: Order;
@@ -103,6 +104,9 @@ export const AdminOrderHeader: React.FC<AdminOrderHeaderProps> = ({
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Banner de Pedido Asistido */}
+        <AssistedOrderBanner order={order} />
 
         {/* Tipo de entrega */}
         <View style={styles.deliveryTypeRow}>

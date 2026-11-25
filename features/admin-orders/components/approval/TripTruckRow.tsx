@@ -78,51 +78,21 @@ export const TripTruckRow: React.FC<Props> = ({
         )}
       </View>
 
-      <View style={styles.bodyRow}>
-        {/* Tonelaje y cálculo */}
-        <View style={styles.tonnageWrap}>
-          <Text style={styles.inputLabel}>Carga (Toneladas)</Text>
-          <View style={styles.tonsControls}>
-            <TouchableOpacity
-              style={styles.stepBtn}
-              onPress={() => onUpdateTons(Math.max(1, Number((truck.totalTons - 1).toFixed(2))))}
-            >
-              <Text style={styles.stepBtnText}>-1</Text>
-            </TouchableOpacity>
-
-            <TextInput
-              style={styles.tonsInput}
-              keyboardType="decimal-pad"
-              value={inputValue}
-              onChangeText={handleChangeText}
-              onBlur={handleBlur}
-              selectTextOnFocus
-            />
-
-            <TouchableOpacity
-              style={styles.stepBtn}
-              onPress={() => onUpdateTons(Number((truck.totalTons + 1).toFixed(2)))}
-            >
-              <Text style={styles.stepBtnText}>+1</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.fundasHint}>~{estFundas} fundas aprox.</Text>
-        </View>
-
-        {/* Asignación de Chofer */}
-        <View style={styles.driverWrap}>
-          <Text style={styles.inputLabel}>Conductor Asignado</Text>
-          <TouchableOpacity
-            style={[
-              styles.driverButton,
-              truck.driverId ? styles.driverAssigned : styles.driverUnassigned,
-            ]}
-            onPress={onOpenDriverModal}
-            activeOpacity={0.8}
-          >
+      {/* 1. Selector de Conductor a Ancho Completo (Elimina el truncado) */}
+      <View style={styles.driverSection}>
+        <Text style={styles.inputLabel}>Conductor Asignado</Text>
+        <TouchableOpacity
+          style={[
+            styles.driverButton,
+            truck.driverId ? styles.driverAssigned : styles.driverUnassigned,
+          ]}
+          onPress={onOpenDriverModal}
+          activeOpacity={0.8}
+        >
+          <View style={styles.driverButtonLeft}>
             <Ionicons
               name={truck.driverId ? "person" : "person-add-outline"}
-              size={15}
+              size={16}
               color={truck.driverId ? "#166534" : "#0F294A"}
             />
             <Text
@@ -134,6 +104,49 @@ export const TripTruckRow: React.FC<Props> = ({
             >
               {truck.driverName || "Seleccionar Conductor"}
             </Text>
+          </View>
+          <Ionicons
+            name="chevron-forward"
+            size={16}
+            color={truck.driverId ? "#166534" : "#94A3B8"}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* 2. Control de Carga con Stepper Ergonómico */}
+      <View style={styles.tonnageSection}>
+        <View style={styles.tonnageHeader}>
+          <Text style={styles.inputLabel}>Carga Asignada</Text>
+          <Text style={styles.fundasHint}>~{estFundas} fundas aprox.</Text>
+        </View>
+
+        <View style={styles.tonsControls}>
+          <TouchableOpacity
+            style={styles.stepBtn}
+            onPress={() => onUpdateTons(Math.max(1, Number((truck.totalTons - 1).toFixed(2))))}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="remove" size={18} color="#334155" />
+          </TouchableOpacity>
+
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.tonsInput}
+              keyboardType="decimal-pad"
+              value={inputValue}
+              onChangeText={handleChangeText}
+              onBlur={handleBlur}
+              selectTextOnFocus
+            />
+            <Text style={styles.unitSuffix}>t</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.stepBtn}
+            onPress={() => onUpdateTons(Number((truck.totalTons + 1).toFixed(2)))}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={18} color="#334155" />
           </TouchableOpacity>
         </View>
       </View>
@@ -166,65 +179,32 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#0F294A",
   },
-  bodyRow: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "flex-start",
-  },
-  tonnageWrap: {
-    flex: 1,
-  },
   inputLabel: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#64748B",
-    marginBottom: 4,
+    marginBottom: 6,
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  tonsControls: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  tonsInput: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    borderRadius: 6,
-    textAlign: "center",
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#0F294A",
-    paddingVertical: 6,
-  },
-  stepBtn: {
-    backgroundColor: "#E2E8F0",
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  stepBtnText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#334155",
-  },
-  fundasHint: {
-    fontSize: 11,
-    color: "#64748B",
-    marginTop: 3,
-  },
-  driverWrap: {
-    flex: 1.2,
+  driverSection: {
+    marginBottom: 12,
   },
   driverButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 6,
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
     borderWidth: 1,
+  },
+  driverButtonLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+    marginRight: 8,
   },
   driverAssigned: {
     backgroundColor: "#DCFCE7",
@@ -235,7 +215,7 @@ const styles = StyleSheet.create({
     borderColor: "#CBD5E1",
   },
   driverButtonText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "600",
     flex: 1,
   },
@@ -244,5 +224,56 @@ const styles = StyleSheet.create({
   },
   driverUnassignedText: {
     color: "#0F294A",
+  },
+  tonnageSection: {
+    marginTop: 2,
+  },
+  tonnageHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  fundasHint: {
+    fontSize: 12,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+  tonsControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  stepBtn: {
+    backgroundColor: "#E2E8F0",
+    width: 44,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  inputWrapper: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 40,
+  },
+  tonsInput: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#0F294A",
+    paddingVertical: 0,
+  },
+  unitSuffix: {
+    fontSize: 13,
+    color: "#64748B",
+    fontWeight: "600",
   },
 });

@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState, useCallback } from "react";
+import { useContext, useState, useCallback, useMemo } from "react";
 import { useRouter, useFocusEffect } from "expo-router";
 import { AuthContext } from "@/context/authContext";
 import { useLoading } from "@/context/loadingContext";
@@ -7,16 +7,13 @@ import { AcceptedTripContext } from "@/context/TripContext";
 import {
   getDriverActiveTrip,
   getDriverActualTrips,
-  getTripAvailable,
-  getTripDetail,
   updateTripStatus,
 } from "@/services/tripsService";
-import { Trip } from "@/types/trips";
 
 export const useDriverHomeTrips = () => {
-  const [trips, setTrips] = useState<Trip[]>([]);
   const [activeTrip, setActiveTrip] = useState<any>(null);
   const [actualTrips, setActualTrips] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const { show, hide } = useLoading();
   const { showAlert } = useAlert();
@@ -43,27 +40,6 @@ export const useDriverHomeTrips = () => {
     setIsRejectModalVisible(false);
     setTripToReject(null);
     setRejectReason("");
-  };
-
-  const fetchTrips = async () => {
-    try {
-      const response = await getTripAvailable();
-      if (response.success && response.trips) {
-        const mappedTrips: Trip[] = response.trips.map((trip: any) => ({
-          id: trip.id,
-          tripNumber: trip.tripNumber,
-          totalTons: trip.totalTons,
-          createdAt: trip.createdAt,
-          assignedDriverId: trip.assignedDriverId,
-          comments: trip.comments,
-          status: trip.status,
-        }));
-
-        setTrips(mappedTrips);
-      }
-    } catch (error) {
-      console.error("❌ Error fetching trips:", error);
-    }
   };
 
   const validateTrips = async () => {
@@ -97,18 +73,23 @@ export const useDriverHomeTrips = () => {
     }
   };
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await validateTrips();
+    setRefreshing(false);
+  }, [user?.uid]);
+
   useFocusEffect(
     useCallback(() => {
       const getTripsAsync = async () => {
         show();
-        await fetchTrips();
         await validateTrips();
         hide();
       };
 
       getTripsAsync();
       return () => {};
-    }, [])
+    }, [user?.uid])
   );
 
   const handleConfirmReject = async () => {
@@ -131,7 +112,6 @@ export const useDriverHomeTrips = () => {
           message: "Has rechazado el viaje. Se ha notificado al Administrador para su reasignación.",
           type: "success",
         });
-        await fetchTrips();
         await validateTrips();
       } else {
         showAlert({
@@ -150,64 +130,37 @@ export const useDriverHomeTrips = () => {
     }
   };
 
-  const handleStartTripFromHome = async (tripItem: any) => {
-    try {
-      show();
-      const detailRes = await getTripDetail(tripItem.id);
-      const fullTrip = detailRes?.success && detailRes?.trip ? detailRes.trip : tripItem;
-
-      const startRes = await updateTripStatus(tripItem.id, "started");
-      if (startRes?.success) {
-        const startedTrip = { ...fullTrip, status: "started" };
-        saveTrip(startedTrip as any);
-        setActiveTrip(startedTrip);
-        showAlert({
-          message: `Viaje #${tripItem.tripNumber} iniciado. ¡Buen viaje!`,
-          type: "success",
-        });
-        router.push("/driver-order");
-      } else {
-        saveTrip({ ...fullTrip, status: "accepted" } as any);
-        showAlert({
-          message: startRes?.message || "No se pudo iniciar la ruta.",
-          type: "warning",
-        });
-        router.push("/driver-order");
+  const activeTripsToRender = useMemo(() => {
+    const list = actualTrips.length > 0 ? [...actualTrips] : activeTrip ? [activeTrip] : [];
+    return list.sort((a, b) => {
+      // Prioridad 1: Viajes en ruta ('started' o 'in_progress') primero
+      const isRouteA = a.status === "started" || a.status === "in_progress" ? 1 : 0;
+      const isRouteB = b.status === "started" || b.status === "in_progress" ? 1 : 0;
+      if (isRouteA !== isRouteB) {
+        return isRouteB - isRouteA;
       }
-    } catch (err: any) {
-      showAlert({
-        message: err?.message || "Error al iniciar la ruta.",
-        type: "error",
-      });
-    } finally {
-      hide();
-    }
-  };
-
-  const displayedTrips = useMemo(() => {
-    return [...trips].sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateA - dateB;
+      // Prioridad 2: Si tienen el mismo estatus, ordenar por fecha más reciente
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
     });
-  }, [trips]);
+  }, [actualTrips, activeTrip]);
 
   return {
-    trips,
-    displayedTrips,
     activeTrip,
     actualTrips,
+    activeTripsToRender,
+    refreshing,
+    onRefresh,
     hasAcceptedTrip,
     isRejectModalVisible,
     rejectReason,
     setRejectReason,
     isSubmittingReject,
     saveTrip,
-    fetchTrips,
     handleOpenRejectModal,
     handleCloseRejectModal,
     handleConfirmReject,
-    handleStartTripFromHome,
     router,
   };
 };

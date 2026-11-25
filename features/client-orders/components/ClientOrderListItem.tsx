@@ -25,6 +25,15 @@ export const ClientOrderListItem: React.FC<ClientOrderListItemProps> = ({
           {String(order.orderNumber ?? "N/A")}
         </Text>
 
+        {Boolean(order.isAssisted || order.createdByRole || order.createdBySellerId || order.createdByAdminId) && (
+          <View style={styles.assistedBadge}>
+            <Ionicons name="sparkles" size={12} color="#4338CA" />
+            <Text style={styles.assistedBadgeText} numberOfLines={1}>
+              Venta Asistida • {order.createdByName || (order.createdByRole === "seller" ? "Vendedor" : "Admin")}
+            </Text>
+          </View>
+        )}
+
         <InfoRow
           icon="cube-outline"
           label="Productos"
@@ -90,7 +99,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: Palette.textDark,
+    marginBottom: 8,
+  },
+  assistedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#EEF2FF",
+    borderWidth: 1,
+    borderColor: "#C7D2FE",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 4,
     marginBottom: 10,
+  },
+  assistedBadgeText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#3730A3",
   },
   rejectionCard: {
     backgroundColor: "#FEE2E2",

@@ -12,6 +12,8 @@ interface ClientOrderSummaryCardProps {
   selectedOrder: any;
   userPhone?: string;
   trip: any;
+  isMultiTrip?: boolean;
+  tripsCount?: number;
   onCallDriver: () => void;
   onWhatsappDriver: (phone?: string) => void;
 }
@@ -20,6 +22,8 @@ export const ClientOrderSummaryCard: React.FC<ClientOrderSummaryCardProps> = ({
   selectedOrder,
   userPhone,
   trip,
+  isMultiTrip = false,
+  tripsCount = 0,
   onCallDriver,
   onWhatsappDriver,
 }) => {
@@ -156,76 +160,87 @@ export const ClientOrderSummaryCard: React.FC<ClientOrderSummaryCardProps> = ({
         </View>
       )}
 
-      {trip && (
-        <InfoRow icon="car-outline" label="Estado del Viaje">
-          <StatusBadge status={trip.status || "available"} size="small" />
-        </InfoRow>
-      )}
-
-      {/* Banner de Estado del Viaje Aceptado */}
-      {trip?.status === "accepted" && (
-        <View style={styles.acceptedBanner}>
-          <View style={styles.acceptedBannerIcon}>
-            <Ionicons name="checkmark-circle" size={24} color="#2563EB" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.acceptedBannerTitle}>
-              ¡Viaje Aceptado por el Conductor!
-            </Text>
-            <Text style={styles.acceptedBannerText}>
-              {trip?.driver?.names
-                ? `${trip.driver.names} aceptó tu pedido y está preparando la carga para iniciar ruta.`
-                : "Tu pedido ya fue aceptado por el conductor y se está preparando para salir."}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Banner de Estado del Viaje En camino */}
-      {(trip?.status === "started" || trip?.status === "in_progress") && (
-        <View
-          style={[
-            styles.acceptedBanner,
-            { backgroundColor: "#EFF6FF", borderColor: "#93C5FD" },
-          ]}
-        >
-          <View
-            style={[
-              styles.acceptedBannerIcon,
-              { backgroundColor: "#DBEAFE" },
-            ]}
-          >
-            <Ionicons name="navigate" size={24} color="#1D4ED8" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.acceptedBannerTitle, { color: "#1E40AF" }]}>
-              ¡Pedido en Camino!
-            </Text>
-            <Text style={[styles.acceptedBannerText, { color: "#1E3A8A" }]}>
-              {trip?.driver?.names
-                ? `${trip.driver.names} va en camino con tu entrega. Puedes ver su avance en el mapa.`
-                : "El conductor ha iniciado la ruta de entrega hacia tu dirección."}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      <CheckRender allowed={trip !== null}>
+      {/* Si es multi-viaje, se muestra la modalidad global; cada chofer y camión se detallan abajo en su tarjeta */}
+      {isMultiTrip ? (
         <InfoRow
-          icon="navigate-outline"
-          label="Número de Viaje"
-          value={trip?.tripNumber}
+          icon="cube-outline"
+          label="Modalidad de Despacho"
+          value={`${tripsCount || 2} Camiones programados`}
         />
-      </CheckRender>
+      ) : (
+        <>
+          {trip && (
+            <InfoRow icon="car-outline" label="Estado del Viaje">
+              <StatusBadge status={trip.status || "available"} size="small" />
+            </InfoRow>
+          )}
 
-      {/* Tarjeta de Conductor y Vehículo */}
-      <CheckRender allowed={Boolean(trip?.assignedDriverId || trip?.driver)}>
-        <ClientOrderDriverCard
-          driver={trip?.driver}
-          onCallDriver={onCallDriver}
-          onWhatsappDriver={onWhatsappDriver}
-        />
-      </CheckRender>
+          {/* Banner de Estado del Viaje Aceptado */}
+          {trip?.status === "accepted" && (
+            <View style={styles.acceptedBanner}>
+              <View style={styles.acceptedBannerIcon}>
+                <Ionicons name="checkmark-circle" size={24} color="#2563EB" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.acceptedBannerTitle}>
+                  ¡Viaje Aceptado por el Conductor!
+                </Text>
+                <Text style={styles.acceptedBannerText}>
+                  {trip?.driver?.names
+                    ? `${trip.driver.names} aceptó tu pedido y está preparando la carga para iniciar ruta.`
+                    : "Tu pedido ya fue aceptado por el conductor y se está preparando para salir."}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Banner de Estado del Viaje En camino */}
+          {(trip?.status === "started" || trip?.status === "in_progress") && (
+            <View
+              style={[
+                styles.acceptedBanner,
+                { backgroundColor: "#EFF6FF", borderColor: "#93C5FD" },
+              ]}
+            >
+              <View
+                style={[
+                  styles.acceptedBannerIcon,
+                  { backgroundColor: "#DBEAFE" },
+                ]}
+              >
+                <Ionicons name="navigate" size={24} color="#1D4ED8" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.acceptedBannerTitle, { color: "#1E40AF" }]}>
+                  ¡Pedido en Camino!
+                </Text>
+                <Text style={[styles.acceptedBannerText, { color: "#1E3A8A" }]}>
+                  {trip?.driver?.names
+                    ? `${trip.driver.names} va en camino con tu entrega. Puedes ver su avance en el mapa.`
+                    : "El conductor ha iniciado la ruta de entrega hacia tu dirección."}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          <CheckRender allowed={trip !== null}>
+            <InfoRow
+              icon="navigate-outline"
+              label="Número de Viaje"
+              value={trip?.tripNumber}
+            />
+          </CheckRender>
+
+          {/* Tarjeta de Conductor y Vehículo */}
+          <CheckRender allowed={Boolean(trip?.assignedDriverId || trip?.driver)}>
+            <ClientOrderDriverCard
+              driver={trip?.driver}
+              onCallDriver={onCallDriver}
+              onWhatsappDriver={onWhatsappDriver}
+            />
+          </CheckRender>
+        </>
+      )}
     </View>
   );
 };
@@ -250,11 +265,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   addressLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: "#64748B",
     fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
   addressText: {
     fontSize: 14,

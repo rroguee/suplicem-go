@@ -1,8 +1,10 @@
 import React from "react";
 import { Image, StyleSheet, View, Text, Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "@/components/MapViewWrapper";
 import { calculateTripEstimate, WAREHOUSE_LOCATION } from "@/utils/tripEstimate";
 import { useTripRoute } from "@/hooks/useTripRoute";
+import { TripEstimateBanner } from "@/components/trips/TripEstimateBanner";
 
 type DriverTripMapProps = {
   location?: { latitude: number; longitude: number } | null;
@@ -64,22 +66,18 @@ export const DriverTripMap: React.FC<DriverTripMapProps> = ({
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Ruta y Tiempo Estimado de Viaje</Text>
 
-      {/* Banner de estimación de tiempo y ruta */}
+      {/* Banner de estimación de tiempo y ruta reutilizable */}
       {estimate && (
-        <View style={styles.estimateBanner}>
-          <View style={styles.estimateHeader}>
-            <Text style={styles.estimateTitle}>⏱️ Tiempo estimado de trayecto:</Text>
-            <Text style={styles.estimateValue}>
-              {roadEstimate
-                ? `${roadEstimate.formattedDuration} (${roadEstimate.formattedDistance})`
-                : estimate.formattedText}
-            </Text>
-          </View>
-          <Text style={styles.estimateRouteText}>
-            🏢 Partida: {hasValidDriverLocation ? "Ubicación del camión" : WAREHOUSE_LOCATION.name}
-            {"\n"}📍 Llegada: {firstDestination?.address?.description || "Destino del cliente"}
-          </Text>
-        </View>
+        <TripEstimateBanner
+          title="Tiempo estimado de trayecto"
+          durationText={
+            roadEstimate
+              ? `${roadEstimate.formattedDuration} (${roadEstimate.formattedDistance})`
+              : estimate.formattedText
+          }
+          originText={hasValidDriverLocation ? "Ubicación del camión" : WAREHOUSE_LOCATION.name}
+          destinationText={firstDestination?.address?.description || "Destino del cliente"}
+        />
       )}
 
       <MapView
@@ -196,38 +194,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: "#0F294A",
   },
-  estimateBanner: {
-    backgroundColor: "#F0F7FF",
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-  },
-  estimateHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 2,
-  },
-  estimateTitle: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: "#1E40AF",
-  },
-  estimateValue: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#E31E24",
-  },
-  estimateRouteText: {
-    fontSize: 12,
-    color: "#334155",
-    lineHeight: 18,
-  },
   map: {
     flex: 1,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   truckIcon: {
     width: 50,

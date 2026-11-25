@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import ScreenHeader from "@/components/ScreenHeader";
 import { AuthContext } from "@/context/authContext";
@@ -19,6 +20,7 @@ import { ClientTripCard } from "../components/ClientTripCard";
 import { ClientTripTrackingModal } from "../components/ClientTripTrackingModal";
 import { ClientOrderProductList } from "../components/ClientOrderProductList";
 import { ClientOrderDeliveriesList } from "../components/ClientOrderDeliveriesList";
+import { ClientAssistedOrderCard } from "../components/ClientAssistedOrderCard";
 import { styles } from "../styles/clientOrderDetail.styles";
 
 interface ClientOrderDetailScreenProps {
@@ -85,17 +87,27 @@ export const ClientOrderDetailScreen: React.FC<ClientOrderDetailScreenProps> = (
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
-      <ScreenHeader title="Detalle de Orden" showBack={true} />
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <ScreenHeader title="Detalle de Orden" showBack={true} />
 
-      {/* 1. Resumen de la Orden y Datos de Entrega */}
-      <ClientOrderSummaryCard
-        selectedOrder={selectedOrder}
-        userPhone={user?.phone}
-        trip={trip}
-        onCallDriver={handleCallDriver}
-        onWhatsappDriver={handleWhatsapp}
-      />
+        {/* Banner de Pedido Asistido si aplica */}
+        <ClientAssistedOrderCard order={selectedOrder} />
+
+        {/* 1. Resumen de la Orden y Datos de Entrega */}
+        <ClientOrderSummaryCard
+          selectedOrder={selectedOrder}
+          userPhone={user?.phone}
+          trip={trip}
+          isMultiTrip={isMultiTrip}
+          tripsCount={trips.length}
+          onCallDriver={handleCallDriver}
+          onWhatsappDriver={handleWhatsapp}
+        />
 
       {/* 1.1 Progreso General de Entrega */}
       {(isMultiTrip || (tonsInfo.deliveredTons > 0 && tonsInfo.totalTons > 0)) && (
@@ -214,6 +226,7 @@ export const ClientOrderDetailScreen: React.FC<ClientOrderDetailScreenProps> = (
         onCallDriver={handleCallDriver}
         onWhatsappDriver={handleWhatsapp}
       />
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };

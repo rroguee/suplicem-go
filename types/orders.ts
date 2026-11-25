@@ -72,6 +72,10 @@ export interface Order {
   totalTons?: number;
   pendingBalance?: number;
   deliveredTons?: number;
+  isAssisted?: boolean;
+  createdByName?: string;
+  createdByRole?: "seller" | "admin";
+  createdByPhone?: string;
 }
 
 export interface OrderFilters {

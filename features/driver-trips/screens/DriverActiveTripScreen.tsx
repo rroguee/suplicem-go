@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { InfoRow } from "@/components/InfoRow";
 import { DriverTripMap } from "@/components/driver/DriverTripMap";
 import { DriverTripOrderCard } from "@/components/driver/DriverTripOrderCard";
 import { TripActionButtons } from "@/components/driver/TripActionButtons";
@@ -44,104 +45,140 @@ export const DriverActiveTripScreen: React.FC = () => {
   }, [isPinModalVisible, refreshSupport]);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 120 }}
-    >
-      <ScreenHeader
-        title="Detalle del viaje"
-        subtitle={`Viaje #${trip?.tripNumber || "N/A"}`}
-        showBack={true}
-        onBack={navigateBack}
-      />
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <ScreenHeader
+          title="Detalle del viaje"
+          subtitle={`Viaje #${trip?.tripNumber || "N/A"}`}
+          showBack={true}
+          onBack={navigateBack}
+        />
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ordenes</Text>
-        {!trip?.orders || trip.orders.length === 0 ? (
-          <View style={{ paddingVertical: 12, alignItems: "center" }}>
-            <ActivityIndicator size="small" color={Palette.primary} />
-            <Text style={{ color: "#64748B", fontSize: 13, marginTop: 6 }}>
-              Cargando órdenes del viaje...
-            </Text>
-          </View>
-        ) : (
-          trip.orders.map((order: any, index: number) => (
-            <DriverTripOrderCard
-              key={order?.id || index}
-              order={order}
-              isExpanded={expandedOrderIndex === index}
-              onToggle={() => toggleOrder(index)}
-              onCall={handleCallClient}
-              onWhatsapp={handleWhatsapp}
-              tripStatus={trip?.status}
-              onOpenDeliveryModal={handleOpenDeliveryModal}
-            />
-          ))
-        )}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Órdenes del viaje</Text>
+          {!trip?.orders || trip.orders.length === 0 ? (
+            <View style={{ paddingVertical: 12, alignItems: "center" }}>
+              <ActivityIndicator size="small" color={Palette.primary} />
+              <Text style={{ color: "#64748B", fontSize: 13, marginTop: 6 }}>
+                Cargando órdenes del viaje...
+              </Text>
+            </View>
+          ) : (
+            trip.orders.map((order: any, index: number) => (
+              <DriverTripOrderCard
+                key={order?.id || index}
+                order={order}
+                isExpanded={expandedOrderIndex === index}
+                onToggle={() => toggleOrder(index)}
+                onCall={handleCallClient}
+                onWhatsapp={handleWhatsapp}
+                tripStatus={trip?.status}
+                onOpenDeliveryModal={handleOpenDeliveryModal}
+              />
+            ))
+          )}
 
-        <View style={{ marginTop: 10 }}>
-          <InfoRow
-            icon="chatbox-ellipses-outline"
-            label="Comentarios"
-            value={trip?.comments || "Ninguno"}
-          />
+          {trip?.comments ? (
+            <View style={styles.commentsCard}>
+              <View style={styles.commentsHeader}>
+                <Ionicons name="chatbox-ellipses-outline" size={16} color="#0284C7" />
+                <Text style={styles.commentsLabel}>Instrucciones / Comentarios</Text>
+              </View>
+              <Text style={styles.commentsValue}>{trip.comments}</Text>
+            </View>
+          ) : null}
         </View>
-      </View>
 
-      <TripActionButtons
-        tripStatus={trip?.status || ""}
-        onStartTrip={handleStartTrip}
-        onCompleteOrder={handleCompleteOrder}
-        onCancel={() => setIsCancelModalVisible(true)}
-      />
+        <TripActionButtons
+          tripStatus={trip?.status || ""}
+          onStartTrip={handleStartTrip}
+          onCompleteOrder={handleCompleteOrder}
+          onCancel={() => setIsCancelModalVisible(true)}
+        />
 
-      <DriverTripMap
-        location={location}
-        orders={trip?.orders}
-        tripStatus={trip?.status || ""}
-      />
+        <DriverTripMap
+          location={location}
+          orders={trip?.orders}
+          tripStatus={trip?.status || ""}
+        />
 
-      <TripExecutionModals
-        isCancelModalVisible={isCancelModalVisible}
-        isDeliveryModalVisible={isDeliveryModalVisible}
-        cancelReason={cancelReason}
-        onCancelReasonChange={setCancelReason}
-        onConfirmCancel={confirmCancelTrip}
-        onCloseCancel={() => {
-          setIsCancelModalVisible(false);
-          setCancelReason("");
-        }}
-        onConfirmDelivery={handleSendDelivery}
-        onCloseDelivery={() => setIsDeliveryModalVisible(false)}
-      />
+        <TripExecutionModals
+          isCancelModalVisible={isCancelModalVisible}
+          isDeliveryModalVisible={isDeliveryModalVisible}
+          cancelReason={cancelReason}
+          onCancelReasonChange={setCancelReason}
+          onConfirmCancel={confirmCancelTrip}
+          onCloseCancel={() => {
+            setIsCancelModalVisible(false);
+            setCancelReason("");
+          }}
+          onConfirmDelivery={handleSendDelivery}
+          onCloseDelivery={() => setIsDeliveryModalVisible(false)}
+        />
 
-      <DeliveryPinModal
-        visible={isPinModalVisible}
-        tripNumber={trip?.tripNumber}
-        supportWhatsapp={supportConfig.whatsapp}
-        supportPhone={supportConfig.phone}
-        onConfirm={confirmCompleteWithPin}
-        onClose={() => setIsPinModalVisible(false)}
-      />
-    </ScrollView>
+        <DeliveryPinModal
+          visible={isPinModalVisible}
+          tripNumber={trip?.tripNumber}
+          supportWhatsapp={supportConfig.whatsapp}
+          supportPhone={supportConfig.phone}
+          onConfirm={confirmCompleteWithPin}
+          onClose={() => setIsPinModalVisible(false)}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: Palette.background,
-    paddingTop: 40,
+  },
+  container: {
+    flex: 1,
     paddingHorizontal: 16,
   },
+  scrollContent: {
+    paddingTop: 8,
+    paddingBottom: 120,
+  },
   section: {
-    marginBottom: 24,
-    marginTop: 10,
+    marginBottom: 16,
+    marginTop: 6,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 8,
+    marginBottom: 10,
     color: Palette.primaryDark,
+  },
+  commentsCard: {
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 8,
+  },
+  commentsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 6,
+  },
+  commentsLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#475569",
+  },
+  commentsValue: {
+    fontSize: 13,
+    color: "#1E293B",
+    lineHeight: 18,
+    fontWeight: "500",
   },
 });

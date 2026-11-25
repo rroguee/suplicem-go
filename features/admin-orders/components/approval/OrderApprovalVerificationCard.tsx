@@ -2,10 +2,11 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Order } from "@/types/orders";
+import { AssistedOrderBanner } from "../AssistedOrderBanner";
 
 interface Props {
   order: Order;
-  onViewReceipt: () => void;
+  onViewReceipt?: () => void;
 }
 
 export const OrderApprovalVerificationCard: React.FC<Props> = ({
@@ -13,14 +14,21 @@ export const OrderApprovalVerificationCard: React.FC<Props> = ({
   onViewReceipt,
 }) => {
   const hasReceipt = Boolean(order.receiptImage);
-  const clientName = `${order.userNames || ""} ${order.userLastNames || ""}`.trim() || "Cliente no especificado";
+  const rawName = `${order.userNames || ""} ${order.userLastNames || ""}`.trim() || "Cliente no especificado";
+  const clientName =
+    rawName === rawName.toUpperCase() && rawName.length > 3
+      ? rawName.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase())
+      : rawName;
 
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.headerInfo}>
           <Text style={styles.orderNumber}>Orden #{order.orderNumber}</Text>
-          <Text style={styles.clientName}>👤 {clientName}</Text>
+          <View style={styles.clientRow}>
+            <Ionicons name="person-outline" size={14} color="#64748B" />
+            <Text style={styles.clientName}>{clientName}</Text>
+          </View>
         </View>
         <View style={styles.typeBadge}>
           <Text style={styles.typeBadgeText}>
@@ -29,12 +37,22 @@ export const OrderApprovalVerificationCard: React.FC<Props> = ({
         </View>
       </View>
 
-      {Boolean(order.userPhone) && (
-        <Text style={styles.metaText}>📞 {order.userPhone}</Text>
-      )}
-      {Boolean(order.userEmail) && (
-        <Text style={styles.metaText}>✉️ {order.userEmail}</Text>
-      )}
+      <View style={styles.contactContainer}>
+        {Boolean(order.userPhone) && (
+          <View style={styles.metaRow}>
+            <Ionicons name="call-outline" size={13} color="#64748B" />
+            <Text style={styles.metaText}>{order.userPhone}</Text>
+          </View>
+        )}
+        {Boolean(order.userEmail) && (
+          <View style={styles.metaRow}>
+            <Ionicons name="mail-outline" size={13} color="#64748B" />
+            <Text style={styles.metaText}>{order.userEmail}</Text>
+          </View>
+        )}
+      </View>
+
+      <AssistedOrderBanner order={order} compact />
 
       <View style={styles.divider} />
 
@@ -45,13 +63,13 @@ export const OrderApprovalVerificationCard: React.FC<Props> = ({
             {order.paymentMethod === "credit" ? "Pago a Crédito" : "Transferencia Bancaria"}
           </Text>
           {Boolean(order.bankReferenceNumber) && (
-            <Text style={{ fontSize: 12, fontWeight: "600", color: "#2563EB", marginTop: 2 }}>
+            <Text style={styles.bankRefText}>
               Ref. Bancaria: {order.bankReferenceNumber}
             </Text>
           )}
         </View>
 
-        {hasReceipt && (
+        {hasReceipt && onViewReceipt && (
           <TouchableOpacity
             style={styles.receiptButton}
             onPress={onViewReceipt}
@@ -65,7 +83,10 @@ export const OrderApprovalVerificationCard: React.FC<Props> = ({
 
       {Boolean(order.comments) && (
         <View style={styles.commentsBox}>
-          <Text style={styles.commentsLabel}>💬 Instrucciones / Comentarios del Cliente:</Text>
+          <View style={styles.commentsHeader}>
+            <Ionicons name="chatbox-ellipses-outline" size={14} color="#475569" />
+            <Text style={styles.commentsLabel}>Instrucciones del Cliente:</Text>
+          </View>
           <Text style={styles.commentsText}>{order.comments}</Text>
         </View>
       )}
@@ -101,11 +122,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#0F294A",
   },
+  clientRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 3,
+  },
   clientName: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#334155",
-    marginTop: 2,
+    color: "#1E293B",
   },
   typeBadge: {
     backgroundColor: "#F1F5F9",
@@ -120,10 +146,18 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#475569",
   },
+  contactContainer: {
+    marginTop: 6,
+    gap: 4,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   metaText: {
     fontSize: 13,
     color: "#64748B",
-    marginTop: 2,
   },
   divider: {
     height: 1,
@@ -136,15 +170,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 11,
+    fontWeight: "700",
     color: "#64748B",
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   paymentValue: {
     fontSize: 15,
     fontWeight: "bold",
     color: "#0F294A",
+    marginTop: 2,
+  },
+  bankRefText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#0284C7",
     marginTop: 2,
   },
   receiptButton: {
@@ -165,21 +206,27 @@ const styles = StyleSheet.create({
   },
   commentsBox: {
     marginTop: 12,
-    backgroundColor: "#FEF3C7",
+    backgroundColor: "#F8FAFC",
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: "#E2E8F0",
+  },
+  commentsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
   },
   commentsLabel: {
     fontSize: 12,
-    fontWeight: "bold",
-    color: "#92400E",
-    marginBottom: 4,
+    fontWeight: "700",
+    color: "#475569",
   },
   commentsText: {
-    fontSize: 14,
-    color: "#78350F",
+    fontSize: 13,
+    color: "#334155",
     lineHeight: 18,
+    fontStyle: "italic",
   },
 });

@@ -57,7 +57,16 @@ export const useLogin = () => {
           return;
         }
 
-        if (user?.status === "inactive") {
+        if (user?.status === "rejected") {
+          showAlert({
+            message: "Tu solicitud de registro ha sido rechazada. Comunícate con soporte.",
+            type: "error",
+          });
+          hide();
+          return;
+        }
+
+        if (user?.status === "inactive" || user?.status === "banned") {
           showAlert({
             message: "Cuenta suspendida temporalmente.",
             type: "info",

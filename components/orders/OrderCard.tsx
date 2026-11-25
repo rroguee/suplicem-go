@@ -54,6 +54,16 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onPressDetails }) =
         </View>
       ) : null}
 
+      {/* Indicador de Pedido Asistido */}
+      {Boolean(order.isAssisted || (order as any).createdBySellerId || (order as any).createdByAdminId) && (
+        <View style={styles.assistedRow}>
+          <Ionicons name="briefcase-outline" size={13} color="#4338CA" />
+          <Text style={styles.assistedText} numberOfLines={1}>
+            Asistido por: {order.createdByName || (order.createdByRole === "seller" || (order as any).createdBySellerId ? "Vendedor" : "Admin")}
+          </Text>
+        </View>
+      )}
+
       {/* Resumen de Productos */}
       <View style={styles.productSummaryBox}>
         <Ionicons name="cube-outline" size={16} color={Palette.primary} />
@@ -225,6 +235,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#64748B",
     fontWeight: "500",
+  },
+  assistedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#EEF2FF",
+    borderWidth: 1,
+    borderColor: "#C7D2FE",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 8,
+    alignSelf: "flex-start",
+  },
+  assistedText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#4338CA",
   },
   rejectionBox: {
     backgroundColor: "#FEF2F2",

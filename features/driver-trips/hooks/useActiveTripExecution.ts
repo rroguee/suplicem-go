@@ -164,22 +164,7 @@ export const useActiveTripExecution = () => {
     }
     if (isSubmitting) return;
 
-    if (trip.orders && Array.isArray(trip.orders)) {
-      for (const tripOrder of trip.orders) {
-        if (tripOrder?.deliveries && Array.isArray(tripOrder.deliveries)) {
-          const allDelivered = tripOrder.deliveries.every((loc: any) => loc.status === "delivered");
-          if (!allDelivered) {
-            showAlert({
-              message: "Debes completar todas las entregas antes de finalizar el viaje.",
-              type: "warning",
-            });
-            return;
-          }
-        }
-      }
-    }
-
-    // Abrir modal de seguridad para solicitar el código PIN al cliente
+    // Abrir directamente el modal de seguridad para solicitar el código PIN al cliente
     setIsPinModalVisible(true);
   };
 

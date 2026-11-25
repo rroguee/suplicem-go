@@ -16,6 +16,10 @@ export default function AdminLayout() {
         name="admin-order-detail"
         options={{ title: "Detalle de Orden", headerShown: false }}
       />
+      <Stack.Screen
+        name="order-approval"
+        options={{ title: "Aprobación de Orden", headerShown: false }}
+      />
     </Stack>
   );
 }

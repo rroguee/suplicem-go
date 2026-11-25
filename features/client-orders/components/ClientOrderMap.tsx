@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, Platform } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "@/components/MapViewWrapper";
 import { calculateTripEstimate, WAREHOUSE_LOCATION } from "@/utils/tripEstimate";
 import { useTripRoute } from "@/hooks/useTripRoute";
+import { TripEstimateBanner } from "@/components/trips/TripEstimateBanner";
 
 interface ClientOrderMapProps {
   driverLocation: {
@@ -72,22 +73,18 @@ export const ClientOrderMap: React.FC<ClientOrderMapProps> = ({
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Seguimiento y Ruta del Pedido</Text>
 
-      {/* Banner de estimación de tiempo y puntos */}
+      {/* Banner de estimación de tiempo y puntos reutilizable */}
       {estimate && (
-        <View style={styles.estimateBanner}>
-          <View style={styles.estimateHeader}>
-            <Text style={styles.estimateTitle}>⏱️ Tiempo estimado de llegada:</Text>
-            <Text style={styles.estimateValue}>
-              {roadEstimate
-                ? `${roadEstimate.formattedDuration} (${roadEstimate.formattedDistance})`
-                : estimate.formattedText}
-            </Text>
-          </View>
-          <Text style={styles.estimateRouteText}>
-            🏢 Partida: {driverLocation ? "Camión en camino" : WAREHOUSE_LOCATION.name}
-            {"\n"}📍 Llegada: {firstDelivery?.address?.description || "Dirección del cliente"}
-          </Text>
-        </View>
+        <TripEstimateBanner
+          title="Tiempo estimado de llegada"
+          durationText={
+            roadEstimate
+              ? `${roadEstimate.formattedDuration} (${roadEstimate.formattedDistance})`
+              : estimate.formattedText
+          }
+          originText={driverLocation ? "Camión en camino" : WAREHOUSE_LOCATION.name}
+          destinationText={firstDelivery?.address?.description || "Dirección del cliente"}
+        />
       )}
 
       <MapView
@@ -180,35 +177,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     color: "#0F294A",
-  },
-  estimateBanner: {
-    backgroundColor: "#F0F7FF",
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
-  },
-  estimateHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  estimateTitle: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: "#1E40AF",
-  },
-  estimateValue: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#E31E24",
-  },
-  estimateRouteText: {
-    fontSize: 12,
-    color: "#334155",
-    lineHeight: 18,
   },
   map: {
     width: "100%",

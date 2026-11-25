@@ -26,7 +26,7 @@ export const AdminOrderActionButtons: React.FC<AdminOrderActionButtonsProps> = (
       {!isEditing && isPendingOrRequested && (
         <View style={styles.buttonsContainer}>
           <TouchableOpacity style={styles.approveButton} onPress={onApprovePress}>
-            <Text style={styles.buttonText}>Aprobar</Text>
+            <Text style={styles.buttonText}>Siguiente</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.rejectButton} onPress={onRejectPress}>
             <Text style={styles.buttonText}>Rechazar</Text>

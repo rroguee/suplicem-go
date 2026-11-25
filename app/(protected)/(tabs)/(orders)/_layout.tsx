@@ -14,11 +14,11 @@ export default function ClientOrdersLayout() {
       />
       <Stack.Screen
         name="(client)"
-        options={{ title: "Ordenes", headerShown: true }}
+        options={{ title: "Ordenes", headerShown: false }}
       />
       <Stack.Screen
         name="(driver)"
-        options={{ title: "Ordenes", headerShown: true }}
+        options={{ title: "Ordenes", headerShown: false }}
       />
     </Stack>
   );

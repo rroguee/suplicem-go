@@ -1,17 +1,24 @@
 import { StyleSheet } from "react-native";
+import { Palette } from "@/constants/theme";
 
 export const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Palette.background,
+  },
   container: {
     flex: 1,
-    backgroundColor: "#fff8f3",
-    paddingTop: 40,
     paddingHorizontal: 16,
+  },
+  scrollContent: {
+    paddingTop: 8,
+    paddingBottom: 100,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff8f3",
+    backgroundColor: Palette.background,
     padding: 20,
   },
   emptyText: {

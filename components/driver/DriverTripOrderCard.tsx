@@ -8,6 +8,7 @@ import { ORDER_PREFIX } from "@/constants/UserConstants";
 import { Palette } from "@/constants/theme";
 import { formatRD } from "@/utils/currencyUtils";
 import { openExternalNavigation } from "@/utils/navigationUtils";
+import { ContactButtonsRow } from "@/components/ContactButtonsRow";
 
 type DriverTripOrderCardProps = {
   order: any;
@@ -16,7 +17,7 @@ type DriverTripOrderCardProps = {
   onCall: (phone: string) => void;
   onWhatsapp: (phone: string) => void;
   tripStatus: string;
-  onOpenDeliveryModal: (orderId: string, deliveryIndex: number) => void;
+  onOpenDeliveryModal?: (orderId: string, deliveryIndex: number) => void;
 };
 
 const hasValidGPS = (address?: any): boolean => {
@@ -37,11 +38,22 @@ export const DriverTripOrderCard: React.FC<DriverTripOrderCardProps> = ({
 }) => {
   return (
     <View style={styles.cardContainer}>
-      <TouchableOpacity onPress={onToggle} style={styles.headerRow}>
-        <Text style={styles.orderLabel}>
-          {`${ORDER_PREFIX.ORD}${order?.orderNumber}`}
-        </Text>
-        <Text style={styles.chevron}>{isExpanded ? "▲" : "▼"}</Text>
+      <TouchableOpacity
+        onPress={onToggle}
+        style={styles.headerRow}
+        activeOpacity={0.7}
+      >
+        <View style={styles.orderLabelContainer}>
+          <Ionicons name="document-text-outline" size={18} color="#0F294A" />
+          <Text style={styles.orderLabel}>
+            {`${ORDER_PREFIX.ORD}${order?.orderNumber}`}
+          </Text>
+        </View>
+        <Ionicons
+          name={isExpanded ? "chevron-up" : "chevron-down"}
+          size={20}
+          color="#64748B"
+        />
       </TouchableOpacity>
 
       {isExpanded && (
@@ -60,24 +72,21 @@ export const DriverTripOrderCard: React.FC<DriverTripOrderCardProps> = ({
             />
           </View>
 
-          <TouchableOpacity
-            style={styles.callButton}
-            onPress={() => onCall(order.userPhone)}
-          >
-            <Text style={styles.actionText}>📞 Llamar al cliente</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.callButton, styles.whatsappButton]}
-            onPress={() => onWhatsapp(order.userPhone)}
-          >
-            <Text style={styles.actionText}>💬 Chat en WhatsApp</Text>
-          </TouchableOpacity>
+          <ContactButtonsRow
+            onCall={() => onCall(order.userPhone)}
+            onWhatsapp={() => onWhatsapp(order.userPhone)}
+            callLabel="Llamar"
+            whatsappLabel="WhatsApp"
+          />
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Productos</Text>
             {order.items.map((item: any, index: number) => (
               <View key={index} style={styles.productCard}>
-                <Text style={styles.productTitle}>🛒 Producto {index + 1}</Text>
+                <View style={styles.productHeader}>
+                  <Ionicons name="cube-outline" size={17} color="#0284C7" />
+                  <Text style={styles.productTitle}>Producto {index + 1}</Text>
+                </View>
                 <InfoRow
                   icon="document-text-outline"
                   label="Descripción"
@@ -89,14 +98,9 @@ export const DriverTripOrderCard: React.FC<DriverTripOrderCardProps> = ({
                   value={order.tripTons ? `${order.tripTons} t` : `${item.quantity} ${item.unit}`}
                 />
                 <InfoRow
-                  icon="cube-outline"
+                  icon="layers-outline"
                   label="Total de la orden"
                   value={`${item.quantity} ${item.unit}`}
-                />
-                <InfoRow
-                  icon="cash-outline"
-                  label="Monto total"
-                  value={formatRD(item.subtotal)}
                 />
               </View>
             ))}
@@ -106,17 +110,25 @@ export const DriverTripOrderCard: React.FC<DriverTripOrderCardProps> = ({
             <Text style={styles.sectionTitle}>Direcciones de entrega</Text>
             {order?.deliveries?.map((delivery: any, index: number) => (
               <View key={delivery.productId || index} style={styles.deliveryCard}>
-                <Text style={styles.value}>
-                  📍 {delivery.address?.description}
-                  {delivery.address?.additionalInfo
-                    ? `, ${delivery.address.additionalInfo}`
-                    : ""}
-                </Text>
-                <Text style={styles.value}>
-                  🪣{" "}
-                  {order?.items?.find((o: any) => o.productId === delivery.productId)?.name}{" "}
-                  - {delivery.quantity} {delivery.unit}
-                </Text>
+                <View style={styles.deliveryAddressRow}>
+                  <Ionicons name="location" size={18} color="#DC2626" style={{ marginTop: 2 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.deliveryAddressText}>
+                      {delivery.address?.description}
+                      {delivery.address?.additionalInfo
+                        ? `, ${delivery.address.additionalInfo}`
+                        : ""}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.deliveryQuantityRow}>
+                  <Ionicons name="layers-outline" size={15} color="#64748B" />
+                  <Text style={styles.deliveryQuantityText}>
+                    {order?.items?.find((o: any) => o.productId === delivery.productId)?.name || "Producto"}{" "}
+                    - {delivery.quantity} {delivery.unit}
+                  </Text>
+                </View>
 
                 {hasValidGPS(delivery?.address) ? (
                   <TouchableOpacity
@@ -130,9 +142,9 @@ export const DriverTripOrderCard: React.FC<DriverTripOrderCardProps> = ({
                     }
                     activeOpacity={0.85}
                   >
-                    <Ionicons name="compass-outline" size={18} color="#FFFFFF" />
+                    <Ionicons name="navigate" size={16} color="#FFFFFF" />
                     <Text style={styles.navigationButtonText}>
-                      🗺️ Navegar con GPS (Google Maps / Waze)
+                      Navegar con GPS (Maps / Waze)
                     </Text>
                   </TouchableOpacity>
                 ) : (
@@ -149,20 +161,6 @@ export const DriverTripOrderCard: React.FC<DriverTripOrderCardProps> = ({
                     <StatusBadge status="delivered" size="small" />
                   </View>
                 </CheckRender>
-                <CheckRender
-                  allowed={
-                    delivery.status !== "delivered" && tripStatus === "started"
-                  }
-                >
-                  <TouchableOpacity
-                    style={styles.deliverButton}
-                    onPress={() => onOpenDeliveryModal(order?.id, delivery.originalIndex !== undefined ? delivery.originalIndex : index)}
-                  >
-                    <Text style={styles.deliverButtonText}>
-                      Marcar como entregado
-                    </Text>
-                  </TouchableOpacity>
-                </CheckRender>
               </View>
             ))}
           </View>
@@ -176,85 +174,132 @@ export default DriverTripOrderCard;
 
 const styles = StyleSheet.create({
   cardContainer: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    paddingBottom: 10,
-    marginBottom: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 2,
   },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 6,
+    paddingVertical: 4,
+  },
+  orderLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   orderLabel: {
     fontSize: 16,
-    fontWeight: "600",
-    color: Palette.text,
-  },
-  chevron: {
-    fontSize: 18,
-    color: Palette.text,
+    fontWeight: "700",
+    color: "#0F294A",
   },
   expandedContent: {
-    marginTop: 6,
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9",
+    paddingTop: 10,
   },
   section: {
-    marginBottom: 16,
-    marginTop: 8,
+    marginBottom: 14,
+    marginTop: 4,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 15,
+    fontWeight: "700",
     marginBottom: 8,
     color: Palette.primaryDark,
   },
-  value: {
-    fontSize: 15,
-    color: "#333",
-    marginBottom: 4,
+  contactButtonsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 14,
   },
   callButton: {
-    backgroundColor: "#4CAF50",
-    paddingVertical: 12,
-    borderRadius: 8,
+    flex: 1,
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#16A34A",
+    paddingVertical: 10,
+    borderRadius: 8,
+    shadowColor: "#16A34A",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 1,
   },
   whatsappButton: {
     backgroundColor: "#25D366",
+    shadowColor: "#25D366",
   },
-  actionText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
+  contactButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 14,
   },
   productCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: "#E2E8F0",
+  },
+  productHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 6,
+    paddingBottom: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
   },
   productTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 8,
-    color: "#333",
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1E293B",
   },
   deliveryCard: {
-    backgroundColor: "#fff",
+    backgroundColor: "#F8FAFC",
     padding: 12,
-    marginBottom: 12,
-    borderRadius: 8,
+    marginBottom: 10,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#E2E8F0",
+  },
+  deliveryAddressRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    marginBottom: 6,
+  },
+  deliveryAddressText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1E293B",
+    lineHeight: 20,
+  },
+  deliveryQuantityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 6,
+    paddingLeft: 2,
+  },
+  deliveryQuantityText: {
+    fontSize: 13,
+    color: "#475569",
+    fontWeight: "500",
   },
   deliverButton: {
     backgroundColor: "#FF7F32",
@@ -273,17 +318,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     backgroundColor: "#0284C7",
-    marginTop: 10,
-    paddingVertical: 10,
+    marginTop: 8,
+    paddingVertical: 9,
     paddingHorizontal: 12,
     borderRadius: 8,
   },
   navigationButtonText: {
     color: "#FFFFFF",
     fontSize: 13,
-    fontWeight: "bold",
+    fontWeight: "700",
   },
-
   noGpsNotice: {
     flexDirection: "row",
     alignItems: "center",

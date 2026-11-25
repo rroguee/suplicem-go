@@ -110,10 +110,20 @@ export const OrderFinancialSummary: React.FC<OrderFinancialSummaryProps> = ({
         </View>
       )}
 
-      {/* Total General */}
-      <View style={[styles.orderSummaryRow, styles.totalRow]}>
-        <Text style={styles.totalLabel}>TOTAL GENERAL DE LA ORDEN:</Text>
-        <Text style={styles.totalAmountText}>{formatRD(totalAmount)}</Text>
+      {/* Total General - Inset Surface Card */}
+      <View style={styles.totalContainer}>
+        <View style={styles.totalLabelWrapper}>
+          <Text style={styles.totalLabel}>TOTAL GENERAL</Text>
+          <Text style={styles.totalSubLabel}>Monto total de la orden</Text>
+        </View>
+        <Text
+          style={styles.totalAmountText}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+        >
+          {formatRD(totalAmount)}
+        </Text>
       </View>
     </View>
   );
@@ -187,21 +197,39 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#0F294A",
   },
-  totalRow: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
+  totalContainer: {
+    marginTop: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  totalLabelWrapper: {
+    flex: 1,
+    marginRight: 8,
   },
   totalLabel: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#0F294A",
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#475569",
+    letterSpacing: 0.6,
+  },
+  totalSubLabel: {
+    fontSize: 11,
+    color: "#94A3B8",
+    marginTop: 2,
+    fontWeight: "500",
   },
   totalAmountText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#E31E24",
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#0F294A",
+    textAlign: "right",
   },
   creditNoteContainer: {
     backgroundColor: "#FFFBEB",

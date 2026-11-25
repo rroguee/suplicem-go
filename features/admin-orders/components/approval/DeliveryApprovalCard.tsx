@@ -47,23 +47,36 @@ export const DeliveryApprovalCard: React.FC<Props> = ({
         </View>
       </View>
 
-      <Text style={styles.addressText} numberOfLines={2}>
-        📍 {delivery.addressDescription || "Dirección no especificada"}
-      </Text>
+      <View style={styles.addressRow}>
+        <Ionicons name="location-outline" size={15} color="#64748B" />
+        <Text style={styles.addressText} numberOfLines={2}>
+          {delivery.addressDescription || "Dirección no especificada"}
+        </Text>
+      </View>
       {Boolean(delivery.recipientName) && (
-        <Text style={styles.recipientText}>👤 Recibe: {delivery.recipientName}</Text>
+        <View style={styles.recipientRow}>
+          <Ionicons name="person-outline" size={14} color="#64748B" />
+          <Text style={styles.recipientText}>Recibe: {delivery.recipientName}</Text>
+        </View>
       )}
 
       {/* Balance de Camiones */}
       <View style={[styles.balanceBar, isBalanced ? styles.balanceOk : styles.balancePending]}>
-        <Text style={styles.balanceText}>
-          Planificado en camiones: <Text style={{ fontWeight: "bold" }}>{plannedTons.toFixed(2)} t</Text> de {delivery.totalTons.toFixed(2)} t
-        </Text>
-        {!isBalanced && (
-          <Text style={styles.diffWarning}>
-            {diff > 0 ? `+${diff.toFixed(2)} t de más` : `${Math.abs(diff).toFixed(2)} t faltantes`}
+        <View style={styles.balanceInfo}>
+          <Ionicons
+            name={isBalanced ? "checkmark-circle" : "alert-circle"}
+            size={16}
+            color={isBalanced ? "#16A34A" : "#DC2626"}
+          />
+          <Text style={styles.balanceText}>
+            Planificado: <Text style={{ fontWeight: "700" }}>{plannedTons.toFixed(2)} t</Text> de {delivery.totalTons.toFixed(2)} t
           </Text>
-        )}
+        </View>
+        <View style={[styles.statusPill, isBalanced ? styles.statusPillOk : styles.statusPillPending]}>
+          <Text style={[styles.statusPillText, isBalanced ? styles.statusPillTextOk : styles.statusPillTextPending]}>
+            {isBalanced ? "Completo" : diff > 0 ? `+${diff.toFixed(2)} t` : `-${Math.abs(diff).toFixed(2)} t`}
+          </Text>
+        </View>
       </View>
 
       {/* Lista de Camiones */}
@@ -135,24 +148,43 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#C2410C",
   },
+  addressRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    marginTop: 2,
+  },
   addressText: {
     fontSize: 13,
     color: "#334155",
     lineHeight: 18,
+    flex: 1,
+  },
+  recipientRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
   },
   recipientText: {
     fontSize: 12,
     color: "#64748B",
-    marginTop: 2,
   },
   balanceBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 8,
     marginTop: 10,
     marginBottom: 12,
+  },
+  balanceInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
   },
   balanceOk: {
     backgroundColor: "#F0FDF4",
@@ -168,10 +200,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#334155",
   },
-  diffWarning: {
+  statusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  statusPillOk: {
+    backgroundColor: "#DCFCE7",
+  },
+  statusPillPending: {
+    backgroundColor: "#FEE2E2",
+  },
+  statusPillText: {
     fontSize: 11,
-    fontWeight: "bold",
-    color: "#DC2626",
+    fontWeight: "700",
+  },
+  statusPillTextOk: {
+    color: "#166534",
+  },
+  statusPillTextPending: {
+    color: "#991B1B",
   },
   trucksList: {
     marginTop: 4,

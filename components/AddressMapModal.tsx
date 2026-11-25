@@ -83,9 +83,16 @@ export const AddressMapModal: React.FC<AddressMapModalProps> = ({
             </View>
           </View>
 
-          <TouchableOpacity style={styles.confirmPinButton} onPress={onConfirm} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={[styles.confirmPinButton, loadingPinGeocode && { opacity: 0.6 }]}
+            onPress={onConfirm}
+            disabled={loadingPinGeocode}
+            activeOpacity={0.8}
+          >
             <Ionicons name="checkmark-circle" size={20} color="#fff" />
-            <Text style={styles.confirmPinButtonText}>Confirmar esta ubicación</Text>
+            <Text style={styles.confirmPinButtonText}>
+              {loadingPinGeocode ? "Obteniendo dirección..." : "Confirmar esta ubicación"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

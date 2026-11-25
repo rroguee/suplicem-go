@@ -108,6 +108,25 @@ export const ClientOrderReceiptCard: React.FC<ClientOrderReceiptCardProps> = ({
         </View>
       </View>
 
+      {/* Referencia Bancaria si aplica */}
+      {Boolean(order?.bankReferenceNumber) && (
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>No. Referencia:</Text>
+          <Text style={styles.detailValue}>{order.bankReferenceNumber}</Text>
+        </View>
+      )}
+
+      {/* Nota / Observación de Pago a Crédito */}
+      {order?.paymentMethod === "credit" && Boolean(order?.creditNote) && (
+        <View style={styles.creditNoteBox}>
+          <View style={styles.creditNoteHeader}>
+            <Ionicons name="document-text-outline" size={15} color="#A04A0E" />
+            <Text style={styles.creditNoteTitle}>Condición / Observación del Crédito:</Text>
+          </View>
+          <Text style={styles.creditNoteContent}>{order.creditNote}</Text>
+        </View>
+      )}
+
       {/* Si hay comprobante cargado */}
       {Boolean(receiptUrl) && (
         <View style={styles.previewContainer}>
@@ -313,5 +332,49 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#64748B",
     flex: 1,
+  },
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#475569",
+  },
+  detailValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0F294A",
+  },
+  creditNoteBox: {
+    backgroundColor: "#FFFBEB",
+    borderColor: "#FDE68A",
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  creditNoteHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 4,
+  },
+  creditNoteTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#A04A0E",
+  },
+  creditNoteContent: {
+    fontSize: 13,
+    color: "#78350F",
+    lineHeight: 18,
   },
 });

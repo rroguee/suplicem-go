@@ -164,6 +164,7 @@ export const useAddressPicker = ({
   };
 
   const updatePinGeocode = (lat: number, lng: number) => {
+    setPinLocation({ latitude: lat, longitude: lng });
     const reqId = ++geocodeReqIdRef.current;
     setLoadingPinGeocode(true);
     if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
@@ -182,6 +183,24 @@ export const useAddressPicker = ({
     let startLat = pinLocation.latitude;
     let startLng = pinLocation.longitude;
 
+    // 1. Si el usuario ya escribió una dirección en el buscador, geocodificarla primero
+    // para centrar el mapa directamente en la ciudad/calle indicada (ej. Mao, Valverde)
+    if (query && query.trim().length >= 3) {
+      try {
+        const geocoded = await forwardGeocodeText(query.trim());
+        if (geocoded && geocoded.latitude && geocoded.longitude) {
+          startLat = geocoded.latitude;
+          startLng = geocoded.longitude;
+          setPinLocation({ latitude: startLat, longitude: startLng });
+          updatePinGeocode(startLat, startLng);
+          return;
+        }
+      } catch (err) {
+        console.log("No se pudo geocodificar la búsqueda para centrar el mapa:", err);
+      }
+    }
+
+    // 2. Si no hay búsqueda previa o falló la geocodificación, usar el GPS del dispositivo
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === "granted") {
@@ -196,7 +215,8 @@ export const useAddressPicker = ({
   };
 
   const handleConfirmPinLocation = () => {
-    const finalDesc = pinAddressText || query || "Punto marcado en mapa";
+    // La descripción debe corresponder fielmente a la ubicación física donde quedó el pin en el mapa
+    const finalDesc = pinAddressText && pinAddressText.trim() ? pinAddressText : (query || "Punto marcado en mapa");
     setQuery(finalDesc);
     setResults([]);
     onPlaceSelected({

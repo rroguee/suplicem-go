@@ -1,37 +1,38 @@
 import React from "react";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Image, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { CancelTripModal } from "@/features/admin-trips/components/CancelTripModal";
 import { useDriverHomeTrips } from "../hooks/useDriverHomeTrips";
 import { ActiveTripBanner } from "../components/ActiveTripBanner";
-import { AssignedTripCard } from "../components/AssignedTripCard";
 import { NoTripsMessage } from "../components/NoTripsMessage";
 
 export const DriverHomeScreen: React.FC = () => {
   const {
-    displayedTrips,
-    activeTrip,
-    actualTrips,
-    hasAcceptedTrip,
+    activeTripsToRender,
+    refreshing,
+    onRefresh,
     isRejectModalVisible,
     rejectReason,
     setRejectReason,
     isSubmittingReject,
     saveTrip,
-    fetchTrips,
     handleOpenRejectModal,
     handleCloseRejectModal,
     handleConfirmReject,
-    handleStartTripFromHome,
     router,
   } = useDriverHomeTrips();
-
-  const activeTripsToRender = actualTrips.length > 0 ? actualTrips : activeTrip ? [activeTrip] : [];
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["#E31E24"]}
+          tintColor="#E31E24"
+        />
+      }
     >
       <View style={styles.topLogoContainer}>
         <Image
@@ -41,39 +42,16 @@ export const DriverHomeScreen: React.FC = () => {
         />
       </View>
 
-      {activeTripsToRender.map((currTrip) => (
-        <ActiveTripBanner
-          key={currTrip.id}
-          currTrip={currTrip}
-          onContinue={(trip) => {
-            saveTrip({ ...trip, status: "accepted" } as any);
-            router.push("/driver-order");
-          }}
-          onReject={handleOpenRejectModal}
-        />
-      ))}
-
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Tus Viajes Asignados</Text>
-        <TouchableOpacity onPress={fetchTrips} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={24} color="#E31E24" />
-        </TouchableOpacity>
-      </View>
-
-      {displayedTrips.length > 0 ? (
-        displayedTrips.map((trip) => (
-          <AssignedTripCard
-            key={trip.id}
-            trip={trip}
-            hasAcceptedTrip={hasAcceptedTrip}
-            onStartRoute={handleStartTripFromHome}
-            onReject={handleOpenRejectModal}
-            onViewDetail={(t) => {
-              router.push({
-                pathname: "/driver-trip-preview",
-                params: { tripId: t.id },
-              });
+      {activeTripsToRender.length > 0 ? (
+        activeTripsToRender.map((currTrip) => (
+          <ActiveTripBanner
+            key={currTrip.id}
+            currTrip={currTrip}
+            onContinue={(trip) => {
+              saveTrip({ ...trip, status: "accepted" } as any);
+              router.push("/driver-order");
             }}
+            onReject={handleOpenRejectModal}
           />
         ))
       ) : (
@@ -111,19 +89,5 @@ const styles = StyleSheet.create({
   topLogo: {
     width: 180,
     height: 60,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#0F294A",
-  },
-  refreshButton: {
-    padding: 6,
   },
 });

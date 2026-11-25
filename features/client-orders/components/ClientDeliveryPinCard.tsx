@@ -45,9 +45,12 @@ export const ClientDeliveryPinCard: React.FC<ClientDeliveryPinCardProps> = ({
       <View style={styles.pinContainer}>
         <Text style={styles.pinText}>{pin}</Text>
       </View>
-      <Text style={styles.note}>
-        🔒 Este código garantiza que el pedido solo se complete en tu presencia.
-      </Text>
+      <View style={styles.noteContainer}>
+        <Ionicons name="lock-closed" size={13} color="#166534" style={{ marginTop: 1 }} />
+        <Text style={styles.note}>
+          Este código garantiza que el pedido solo se complete en tu presencia.
+        </Text>
+      </View>
     </View>
   );
 };
@@ -93,6 +96,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     letterSpacing: 10,
     color: "#0F294A",
+  },
+  noteContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
   },
   note: {
     fontSize: 11,
