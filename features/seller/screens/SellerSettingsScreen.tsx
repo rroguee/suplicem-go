@@ -34,7 +34,10 @@ export const SellerSettingsScreen: React.FC = () => {
   };
 
   const handleNavigateCreateClient = () => {
-    router.push("/(protected)/(tabs)/(orders)/create-client" as any);
+    router.push({
+      pathname: "/(protected)/(tabs)/(orders)/create-client",
+      params: { from: "settings" },
+    } as any);
   };
 
   return (

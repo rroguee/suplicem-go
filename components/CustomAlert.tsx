@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import {
   Animated,
+  Modal,
   Text,
   StyleSheet,
   TouchableOpacity,
@@ -127,30 +128,38 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   }
 
   return (
-    <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
-      <TouchableOpacity
-        activeOpacity={1}
-        style={styles.dismissOverlayTouch}
-        onPress={handleDismiss}
-      >
-        <Animated.View
-          style={[
-            styles.alertContainer,
-            { backgroundColor },
-            { transform: [{ scale: scaleAnim }] },
-          ]}
+    <Modal
+      visible={isVisible}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={handleDismiss}
+    >
+      <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.dismissOverlayTouch}
+          onPress={handleDismiss}
         >
-          <View
-            style={[styles.iconBackground, { backgroundColor: secondaryColor }]}
+          <Animated.View
+            style={[
+              styles.alertContainer,
+              { backgroundColor },
+              { transform: [{ scale: scaleAnim }] },
+            ]}
           >
-            <Text style={styles.iconChar}>{iconChar}</Text>
-          </View>
-          <View style={styles.contentWrapper}>
-            <Text style={styles.messageText}>{message}</Text>
-          </View>
-        </Animated.View>
-      </TouchableOpacity>
-    </Animated.View>
+            <View
+              style={[styles.iconBackground, { backgroundColor: secondaryColor }]}
+            >
+              <Text style={styles.iconChar}>{iconChar}</Text>
+            </View>
+            <View style={styles.contentWrapper}>
+              <Text style={styles.messageText}>{message}</Text>
+            </View>
+          </Animated.View>
+        </TouchableOpacity>
+      </Animated.View>
+    </Modal>
   );
 };
 

@@ -72,7 +72,7 @@ export const useCreateProductForm = () => {
       price: numPrice,
       unit: unit.trim() || "fundas",
       weightKg: parseFloat(weightKg) || 42.5,
-      manualLotPrices: Object.keys(manualLotPrices).length > 0 ? manualLotPrices : undefined,
+      manualLotPrices: manualLotPrices,
       imageUri: imageUri || undefined,
     };
 

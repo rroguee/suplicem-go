@@ -2,17 +2,38 @@ import React from "react";
 import { View, Text, TouchableOpacity, Linking, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Order } from "@/types/orders";
+import { useAuth } from "@/context/authContext";
 
 interface ClientAssistedOrderCardProps {
   order: Order;
 }
 
 export const ClientAssistedOrderCard: React.FC<ClientAssistedOrderCardProps> = ({ order }) => {
+  const { user } = useAuth();
+
   const isAssisted = Boolean(
     order.isAssisted || order.createdByRole || (order as any).createdBySellerId || (order as any).createdByAdminId
   );
 
   if (!isAssisted) return null;
+
+  // Si el usuario actual es un vendedor y él mismo creó o tiene asignada la orden,
+  // ocultamos el aviso (solo se muestra cuando el pedido fue asistido por otro vendedor/administración, o si lo ve el cliente).
+  const isSellerUser = user?.userType === "seller";
+  const userFullName = `${user?.names || ""} ${user?.lastNames || ""}`.trim().toLowerCase();
+  const cleanUserPhone = (user?.phone || "").replace(/\D/g, "");
+  const cleanOrderPhone = (order.createdByPhone || "").replace(/\D/g, "");
+
+  const isSelf = Boolean(
+    (user?.uid && (order as any).createdBySellerId && user.uid === (order as any).createdBySellerId) ||
+    (user?.uid && order.sellerId && user.uid === order.sellerId) ||
+    (cleanUserPhone && cleanOrderPhone && cleanUserPhone === cleanOrderPhone) ||
+    (userFullName && order.createdByName && userFullName === order.createdByName.trim().toLowerCase())
+  );
+
+  if (isSellerUser && isSelf) {
+    return null;
+  }
 
   const isSeller = order.createdByRole === "seller" || Boolean((order as any).createdBySellerId);
   const roleLabel = isSeller ? "Vendedor Asignado" : "Administración";
@@ -31,7 +52,9 @@ export const ClientAssistedOrderCard: React.FC<ClientAssistedOrderCardProps> = (
 
       <Text style={styles.title}>Registrada por {creatorName}</Text>
       <Text style={styles.description}>
-        Este pedido fue ingresado por tu asesor comercial para agilizar tu compra. Puedes comunicarte directamente si requieres cualquier ajuste antes del despacho.
+        {isSellerUser
+          ? "Este pedido fue ingresado por otro asesor comercial o por administración. Puedes comunicarte directamente si requieres coordinar antes del despacho."
+          : "Este pedido fue ingresado por tu asesor comercial para agilizar tu compra. Puedes comunicarte directamente si requieres cualquier ajuste antes del despacho."}
       </Text>
 
       {Boolean(phone) && (

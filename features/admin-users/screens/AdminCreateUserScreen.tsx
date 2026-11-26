@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -10,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import CustomPickerModal from "@/components/CustomPickerModal";
 import { ActionSuccessModal } from "@/components/common/ActionSuccessModal";
 import { ScreenHeader } from "@/components/ScreenHeader";
@@ -34,6 +35,7 @@ const BUTTON_TEXT: Record<string, string> = {
 
 export const AdminCreateUserScreen: React.FC = () => {
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const {
     names,
     setNames,
@@ -66,6 +68,27 @@ export const AdminCreateUserScreen: React.FC = () => {
     resetForm,
   } = useAdminCreateUser();
 
+  // Si se ingresó desde Ajustes, interceptar botón físico/gesto atrás para regresar a Ajustes
+  useEffect(() => {
+    if (from !== "settings") return;
+
+    const onBackPress = () => {
+      router.replace("/(protected)/(tabs)/(settings)" as any);
+      return true;
+    };
+
+    const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+    return () => subscription.remove();
+  }, [from, router]);
+
+  const handleBack = () => {
+    if (from === "settings") {
+      return router.replace("/(protected)/(tabs)/(settings)" as any);
+    }
+    if (router.canGoBack()) return router.back();
+    router.replace(isSeller ? "/(protected)/(tabs)/(orders)" : "/(protected)/(tabs)/(settings)");
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -81,10 +104,7 @@ export const AdminCreateUserScreen: React.FC = () => {
       <ScreenHeader
         title={isSeller ? "Registrar Cliente" : "Crear Usuario"}
         showBack={true}
-        onBack={() => {
-          if (router.canGoBack()) return router.back();
-          router.replace(isSeller ? "/(protected)/(tabs)/(orders)" : "/(protected)/(tabs)/(settings)");
-        }}
+        onBack={handleBack}
         style={{ marginBottom: 16 }}
       />
 
@@ -206,7 +226,12 @@ export const AdminCreateUserScreen: React.FC = () => {
         onClose={() => {
           setShowSuccessModal(false);
           resetForm();
-          router.back();
+          // Al registrar el cliente con éxito, siempre redirige a Mis Clientes para ver la cartera
+          if (isSeller) {
+            router.replace("/(protected)/(tabs)/(orders)" as any);
+          } else {
+            router.back();
+          }
         }}
       />
     </KeyboardAvoidingView>

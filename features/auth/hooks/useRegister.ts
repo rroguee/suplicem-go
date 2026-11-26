@@ -6,7 +6,7 @@ import { AuthContext } from "@/context/authContext";
 import { useAlert } from "@/context/alertContext";
 import { useLoading } from "@/context/loadingContext";
 import { createUserAccount } from "@/services/userService";
-import { lookupCedula, lookupRnc } from "@/services/authService";
+import { lookupRnc } from "@/services/authService";
 import { RegisterFormData } from "@/types/users";
 import { registerSchema } from "@/validations/registerSchema";
 import { pickAndCompressImage } from "@/utils/imageUtils";
@@ -61,7 +61,6 @@ export const useRegister = () => {
   const registerMethod = watch("registerMethod") || "email";
   const personType = watch("personType") || "fisica";
   const identificationType = watch("identificationType");
-  const [isLookingUpCedula, setIsLookingUpCedula] = useState(false);
   const [isLookingUpRnc, setIsLookingUpRnc] = useState(false);
 
   const handleLookupRnc = async () => {
@@ -108,51 +107,6 @@ export const useRegister = () => {
       });
     } finally {
       setIsLookingUpRnc(false);
-      hide();
-    }
-  };
-
-  const handleLookupCedula = async () => {
-    if (!__DEV__) return;
-    const rawId = watch("identification") || "";
-    const cleanCedula = rawId.replace(/[^0-9]/g, "");
-
-    if (cleanCedula.length !== 11) {
-      showAlert({
-        message: "Ingresa un número de cédula válido de 11 dígitos para consultar.",
-        type: "warning",
-      });
-      return;
-    }
-
-    setIsLookingUpCedula(true);
-    show();
-    try {
-      const response = await lookupCedula(cleanCedula);
-      if (response?.data?.success && response?.data?.identity) {
-        const { names, lastNames } = response.data.identity;
-        if (names) setValue("names", names, { shouldValidate: true });
-        if (lastNames) setValue("lastNames", lastNames, { shouldValidate: true });
-        showAlert({
-          message: `Datos encontrados: ${names} ${lastNames}`,
-          type: "success",
-        });
-      } else {
-        showAlert({
-          message:
-            response?.data?.message ||
-            response?.message ||
-            "No se encontraron datos para la cédula ingresada en el padrón.",
-          type: "warning",
-        });
-      }
-    } catch (err: any) {
-      showAlert({
-        message: err?.message || "Error al consultar la cédula en la JCE.",
-        type: "error",
-      });
-    } finally {
-      setIsLookingUpCedula(false);
       hide();
     }
   };
@@ -319,8 +273,6 @@ export const useRegister = () => {
     onSubmit,
     acceptedTerms,
     setAcceptedTerms,
-    handleLookupCedula,
-    isLookingUpCedula,
     handleLookupRnc,
     isLookingUpRnc,
     identificationType,

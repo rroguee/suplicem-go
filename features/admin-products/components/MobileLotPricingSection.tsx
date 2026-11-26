@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { STANDARD_BAG_QUANTITIES } from "@/constants/cartConstants";
 import { formatNumberWithCommas, formatRD, parseNumberWithCommas } from "@/utils/currencyUtils";
@@ -20,18 +20,39 @@ export const MobileLotPricingSection: React.FC<Props> = ({
 
   const selectedLotNum = parseInt(selectedLot, 10) || 50;
   const proportionalPrice = basePrice * selectedLotNum;
+  const isCurrentLotManual = manualLotPrices[selectedLot] !== undefined;
+
+  // Sincronizar el input con el precio del lote cuando se cargan datos o cambia la selección
+  useEffect(() => {
+    if (manualLotPrices[selectedLot] !== undefined) {
+      setInputPrice(formatNumberWithCommas(manualLotPrices[selectedLot]));
+    } else {
+      setInputPrice("");
+    }
+  }, [selectedLot, manualLotPrices]);
+
+  const handleSelectLot = (lotStr: string) => {
+    setSelectedLot(lotStr);
+    if (manualLotPrices[lotStr] !== undefined) {
+      setInputPrice(formatNumberWithCommas(manualLotPrices[lotStr]));
+    } else {
+      setInputPrice("");
+    }
+  };
 
   const handleAddPrice = () => {
     const val = parseNumberWithCommas(inputPrice);
     if (!val || val <= 0) return;
     onUpdateManualLotPrices({ ...manualLotPrices, [selectedLot]: Number(val.toFixed(2)) });
-    setInputPrice("");
   };
 
   const handleRemovePrice = (lotKey: string) => {
     const updated = { ...manualLotPrices };
     delete updated[lotKey];
     onUpdateManualLotPrices(updated);
+    if (selectedLot === lotKey) {
+      setInputPrice("");
+    }
   };
 
   return (
@@ -50,10 +71,7 @@ export const MobileLotPricingSection: React.FC<Props> = ({
             <TouchableOpacity
               key={lot}
               style={[styles.pill, isManual && styles.pillManual, isSelected && !isManual && styles.pillSelected]}
-              onPress={() => {
-                setSelectedLot(String(lot));
-                setInputPrice(manualLotPrices[String(lot)] ? formatNumberWithCommas(manualLotPrices[String(lot)]) : "");
-              }}
+              onPress={() => handleSelectLot(String(lot))}
             >
               <Text style={[styles.pillText, isManual && styles.pillTextManual, isSelected && !isManual && styles.pillTextSelected]}>
                 {lot}
@@ -78,7 +96,7 @@ export const MobileLotPricingSection: React.FC<Props> = ({
             keyboardType="numeric"
           />
           <TouchableOpacity style={styles.addBtn} onPress={handleAddPrice}>
-            <Text style={styles.addBtnText}>Agregar ↵</Text>
+            <Text style={styles.addBtnText}>{isCurrentLotManual ? "Actualizar ↵" : "Agregar ↵"}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -87,6 +105,8 @@ export const MobileLotPricingSection: React.FC<Props> = ({
         basePrice={basePrice}
         manualLotPrices={manualLotPrices}
         onRemovePrice={handleRemovePrice}
+        onSelectLot={handleSelectLot}
+        selectedLot={selectedLot}
       />
     </View>
   );

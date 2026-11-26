@@ -41,8 +41,6 @@ export const RegisterScreen: React.FC = () => {
     onSubmit,
     acceptedTerms,
     setAcceptedTerms,
-    handleLookupCedula,
-    isLookingUpCedula,
     handleLookupRnc,
     isLookingUpRnc,
     identificationType,
@@ -72,8 +70,6 @@ export const RegisterScreen: React.FC = () => {
         <RegisterPersonalFields
           control={control}
           errors={errors}
-          onLookupCedula={handleLookupCedula}
-          isLookingUpCedula={isLookingUpCedula}
           onLookupRnc={handleLookupRnc}
           isLookingUpRnc={isLookingUpRnc}
           identificationType={identificationType}

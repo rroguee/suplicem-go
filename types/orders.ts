@@ -73,6 +73,9 @@ export interface Order {
   pendingBalance?: number;
   deliveredTons?: number;
   isAssisted?: boolean;
+  sellerId?: string;
+  createdBySellerId?: string;
+  createdByAdminId?: string;
   createdByName?: string;
   createdByRole?: "seller" | "admin";
   createdByPhone?: string;

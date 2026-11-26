@@ -8,8 +8,6 @@ import { RegisterFormData } from "@/types/users";
 interface RegisterPersonalFieldsProps {
   control: Control<RegisterFormData>;
   errors: FieldErrors<RegisterFormData>;
-  onLookupCedula?: () => void;
-  isLookingUpCedula?: boolean;
   onLookupRnc?: () => void;
   isLookingUpRnc?: boolean;
   identificationType?: string;
@@ -21,8 +19,6 @@ interface RegisterPersonalFieldsProps {
 export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
   control,
   errors,
-  onLookupCedula,
-  isLookingUpCedula,
   onLookupRnc,
   isLookingUpRnc,
   identificationType = "Cedula",
@@ -169,25 +165,6 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
           />
           {errors.identification && (
             <Text style={styles.error}>{errors.identification.message}</Text>
-          )}
-
-          {__DEV__ && identificationType === "Cedula" && onLookupCedula && (
-            <TouchableOpacity
-              style={styles.lookupButton}
-              onPress={onLookupCedula}
-              disabled={isLookingUpCedula}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name="search-outline"
-                size={16}
-                color="#E31E24"
-                style={{ marginRight: 6 }}
-              />
-              <Text style={styles.lookupButtonText}>
-                {isLookingUpCedula ? "Consultando en JCE..." : "Consultar Cédula (JCE)"}
-              </Text>
-            </TouchableOpacity>
           )}
         </>
       )}
