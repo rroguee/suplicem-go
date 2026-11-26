@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Linking, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons";
 import { Order } from "@/types/orders";
 import { useAuth } from "@/context/authContext";
+import { isAssistedOrder, isAssistedOrderCreator } from "@/utils/orderAssistedUtils";
 
 interface ClientAssistedOrderCardProps {
   order: Order;
@@ -11,30 +12,15 @@ interface ClientAssistedOrderCardProps {
 export const ClientAssistedOrderCard: React.FC<ClientAssistedOrderCardProps> = ({ order }) => {
   const { user } = useAuth();
 
-  const isAssisted = Boolean(
-    order.isAssisted || order.createdByRole || (order as any).createdBySellerId || (order as any).createdByAdminId
-  );
+  if (!isAssistedOrder(order)) return null;
 
-  if (!isAssisted) return null;
-
-  // Si el usuario actual es un vendedor y él mismo creó o tiene asignada la orden,
-  // ocultamos el aviso (solo se muestra cuando el pedido fue asistido por otro vendedor/administración, o si lo ve el cliente).
-  const isSellerUser = user?.userType === "seller";
-  const userFullName = `${user?.names || ""} ${user?.lastNames || ""}`.trim().toLowerCase();
-  const cleanUserPhone = (user?.phone || "").replace(/\D/g, "");
-  const cleanOrderPhone = (order.createdByPhone || "").replace(/\D/g, "");
-
-  const isSelf = Boolean(
-    (user?.uid && (order as any).createdBySellerId && user.uid === (order as any).createdBySellerId) ||
-    (user?.uid && order.sellerId && user.uid === order.sellerId) ||
-    (cleanUserPhone && cleanOrderPhone && cleanUserPhone === cleanOrderPhone) ||
-    (userFullName && order.createdByName && userFullName === order.createdByName.trim().toLowerCase())
-  );
-
-  if (isSellerUser && isSelf) {
+  // Si el usuario actual (admin o vendedor) fue quien creó el pedido asistido,
+  // ocultamos el aviso para evitar fraudes y alertas redundantes a quien lo originó.
+  if (isAssistedOrderCreator(user, order)) {
     return null;
   }
 
+  const isSellerUser = user?.userType === "seller";
   const isSeller = order.createdByRole === "seller" || Boolean((order as any).createdBySellerId);
   const roleLabel = isSeller ? "Vendedor Asignado" : "Administración";
   const creatorName = order.createdByName || (isSeller ? "Asesor Comercial" : "Administración");

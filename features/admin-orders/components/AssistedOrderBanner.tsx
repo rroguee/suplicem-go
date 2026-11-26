@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, TouchableOpacity, Linking, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Order } from "@/types/orders";
+import { useAuth } from "@/context/authContext";
+import { isAssistedOrder, isAssistedOrderCreator } from "@/utils/orderAssistedUtils";
 
 interface AssistedOrderBannerProps {
   order: Order;
@@ -12,11 +14,15 @@ export const AssistedOrderBanner: React.FC<AssistedOrderBannerProps> = ({
   order,
   compact = false,
 }) => {
-  const isAssisted = Boolean(
-    order.isAssisted || order.createdByRole || (order as any).createdBySellerId || (order as any).createdByAdminId
-  );
+  const { user } = useAuth();
 
-  if (!isAssisted) {
+  if (!isAssistedOrder(order)) {
+    return null;
+  }
+
+  // Si el usuario actual (admin o vendedor) fue quien registró la orden asistida,
+  // ocultamos el aviso (solo debe verse por otros administradores auditores).
+  if (isAssistedOrderCreator(user, order)) {
     return null;
   }
 

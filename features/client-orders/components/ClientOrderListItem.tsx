@@ -5,6 +5,8 @@ import { InfoRow } from "@/components/InfoRow";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ORDER_PREFIX } from "@/constants/UserConstants";
 import { Palette } from "@/constants/theme";
+import { useAuth } from "@/context/authContext";
+import { isAssistedOrder, isAssistedOrderCreator } from "@/utils/orderAssistedUtils";
 
 interface ClientOrderListItemProps {
   order: any;
@@ -17,6 +19,9 @@ export const ClientOrderListItem: React.FC<ClientOrderListItemProps> = ({
   onPress,
   onQuickReorder,
 }) => {
+  const { user } = useAuth();
+  const shouldShowAssistedBadge = isAssistedOrder(order) && !isAssistedOrderCreator(user, order);
+
   return (
     <View style={styles.cardWrapper}>
       <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
@@ -25,7 +30,7 @@ export const ClientOrderListItem: React.FC<ClientOrderListItemProps> = ({
           {String(order.orderNumber ?? "N/A")}
         </Text>
 
-        {Boolean(order.isAssisted || order.createdByRole || order.createdBySellerId || order.createdByAdminId) && (
+        {shouldShowAssistedBadge && (
           <View style={styles.assistedBadge}>
             <Ionicons name="sparkles" size={12} color="#4338CA" />
             <Text style={styles.assistedBadgeText} numberOfLines={1}>

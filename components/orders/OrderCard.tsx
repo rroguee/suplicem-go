@@ -5,6 +5,8 @@ import { Order } from "@/types/orders";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatProductQuantity } from "@/constants/cartConstants";
 import { Palette } from "@/constants/theme";
+import { useAuth } from "@/context/authContext";
+import { isAssistedOrder, isAssistedOrderCreator } from "@/utils/orderAssistedUtils";
 
 interface OrderCardProps {
   order: Order;
@@ -12,9 +14,11 @@ interface OrderCardProps {
 }
 
 export const OrderCard: React.FC<OrderCardProps> = ({ order, onPressDetails }) => {
+  const { user } = useAuth();
   const isCredit = order.paymentMethod === "credit";
   const clientName = `${order.userNames || ""} ${order.userLastNames || ""}`.trim() || "Cliente no especificado";
   const aiRisk = (order as any).aiRiskFlag;
+  const shouldShowAssistedBadge = isAssistedOrder(order) && !isAssistedOrderCreator(user, order);
 
   return (
     <View style={[styles.card, aiRisk && styles.cardAiRisk]}>
@@ -55,7 +59,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onPressDetails }) =
       ) : null}
 
       {/* Indicador de Pedido Asistido */}
-      {Boolean(order.isAssisted || (order as any).createdBySellerId || (order as any).createdByAdminId) && (
+      {shouldShowAssistedBadge && (
         <View style={styles.assistedRow}>
           <Ionicons name="briefcase-outline" size={13} color="#4338CA" />
           <Text style={styles.assistedText} numberOfLines={1}>
