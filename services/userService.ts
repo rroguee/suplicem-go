@@ -169,8 +169,8 @@ export const updateDriverProfile = async (
       },
     });
     return response.data;
-  } catch (error) {
-    console.error("Error al actualizar el perfil del conductor:", error);
+  } catch (error: any) {
+    console.error("Error al actualizar el perfil del conductor:", error.response?.data || error);
     throw error;
   }
 };
@@ -186,27 +186,33 @@ export const updateClientProfile = async (
   addresses: Address[]
 ) => {
   try {
+    const validAddresses = (addresses || []).filter(
+      (a) => a && typeof a.description === "string" && a.description.trim().length > 0
+    );
     const response = await protectedApi.patch("/users/update", {
       uid,
       phone,
-      addresses,
+      addresses: validAddresses,
     });
     return response.data;
-  } catch (error) {
-    console.error("Error al actualizar el perfil del cliente:", error);
+  } catch (error: any) {
+    console.error("Error al actualizar el perfil del cliente:", error.response?.data || error);
     throw error;
   }
 };
 
 export const updateUserAddresses = async (uid: string, addresses: Address[]) => {
   try {
+    const validAddresses = (addresses || []).filter(
+      (a) => a && typeof a.description === "string" && a.description.trim().length > 0
+    );
     const response = await protectedApi.patch("/users/update", {
       uid,
-      addresses,
+      addresses: validAddresses,
     });
     return response.data;
-  } catch (error) {
-    console.error("Error al actualizar direcciones del usuario:", error);
+  } catch (error: any) {
+    console.error("Error al actualizar direcciones del usuario:", error.response?.data || error);
     throw error;
   }
 };

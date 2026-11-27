@@ -44,24 +44,34 @@ export const useClientSettings = () => {
       }
       try {
         show();
-        await updateClientProfile(user.uid, phone, addresses);
+        const validAddresses = addresses.filter(
+          (addr) => addr && typeof addr.description === "string" && addr.description.trim().length > 0
+        );
+
+        await updateClientProfile(user.uid, phone.trim(), validAddresses);
 
         const newUser = {
           ...user,
-          phone,
-          addresses,
+          phone: phone.trim(),
+          addresses: validAddresses,
         };
 
         logIn(newUser);
+        setAddresses(validAddresses);
         showAlert({
           message: "¡Perfil y direcciones actualizadas con éxito!",
           type: "success",
         });
         setIsEditing(false);
-      } catch (error) {
-        console.error("Error al actualizar el cliente:", error);
+      } catch (error: any) {
+        console.error("Error al actualizar el cliente:", error.response?.data || error);
+        const serverError =
+          error?.response?.data?.message ||
+          error?.response?.data?.errors?.[0]?.message ||
+          error?.message ||
+          "No se pudo actualizar el perfil. Inténtelo de nuevo.";
         showAlert({
-          message: "No se pudo actualizar el perfil. Inténtelo de nuevo.",
+          message: serverError,
           type: "error",
         });
       } finally {
