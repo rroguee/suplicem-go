@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { formatDominicanPhone } from "@/utils/formatters";
 
 interface PhoneLoginModalProps {
   visible: boolean;
@@ -62,11 +63,12 @@ export const PhoneLoginModal: React.FC<PhoneLoginModalProps> = ({
               </Text>
               <TextInput
                 style={styles.input}
-                placeholder="Ej: 8091234567"
+                placeholder="+1 (809) 000-0000"
                 placeholderTextColor="#94A3B8"
                 keyboardType="phone-pad"
+                maxLength={17}
                 value={phone}
-                onChangeText={onChangePhone}
+                onChangeText={(text) => onChangePhone(formatDominicanPhone(text))}
                 editable={!isSubmitting}
               />
               <TouchableOpacity

@@ -179,6 +179,23 @@ export const useRegister = () => {
     delete payload.confirmPassword;
     delete payload.registerMethod;
 
+    // Normalizar Cédula a dígitos numéricos puros
+    if (payload.identification && (payload.identificationType === "Cedula" || !payload.identificationType)) {
+      payload.identification = payload.identification.replace(/\D/g, "");
+    }
+
+    // Normalizar teléfono a formato internacional E.164 (+1XXXXXXXXXX)
+    if (payload.phone) {
+      const cleanPhoneDigits = payload.phone.replace(/\D/g, "");
+      const localPhone =
+        cleanPhoneDigits.startsWith("1") && cleanPhoneDigits.length === 11
+          ? cleanPhoneDigits.slice(1)
+          : cleanPhoneDigits;
+      if (localPhone.length === 10) {
+        payload.phone = `+1${localPhone}`;
+      }
+    }
+
     if (isEmpresa) {
       payload.userType = "client";
       payload.identificationType = "RNC";

@@ -55,7 +55,12 @@ export const registerSchema = z
       }
 
       if (data.phone && data.phone.trim() !== "") {
-        if (!/^8[0249]\d{8}$/.test(data.phone)) {
+        const cleanPhone = data.phone.replace(/\D/g, "");
+        const localPhone =
+          cleanPhone.startsWith("1") && cleanPhone.length === 11
+            ? cleanPhone.slice(1)
+            : cleanPhone;
+        if (!/^8[0249]\d{8}$/.test(localPhone)) {
           ctx.addIssue({
             path: ["phone"],
             message: "Número de teléfono inválido (ej. 809..., 829..., 849...)",
@@ -119,12 +124,19 @@ export const registerSchema = z
           message: "Teléfono requerido",
           code: z.ZodIssueCode.custom,
         });
-      } else if (!/^8[0249]\d{8}$/.test(data.phone)) {
-        ctx.addIssue({
-          path: ["phone"],
-          message: "Número de teléfono inválido (ej. 809..., 829..., 849...)",
-          code: z.ZodIssueCode.custom,
-        });
+      } else {
+        const cleanPhone = data.phone.replace(/\D/g, "");
+        const localPhone =
+          cleanPhone.startsWith("1") && cleanPhone.length === 11
+            ? cleanPhone.slice(1)
+            : cleanPhone;
+        if (!/^8[0249]\d{8}$/.test(localPhone)) {
+          ctx.addIssue({
+            path: ["phone"],
+            message: "Número de teléfono inválido (ej. 809..., 829..., 849...)",
+            code: z.ZodIssueCode.custom,
+          });
+        }
       }
     }
 

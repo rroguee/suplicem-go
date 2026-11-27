@@ -4,6 +4,7 @@ import { Control, Controller, FieldErrors } from "react-hook-form";
 import { Ionicons } from "@expo/vector-icons";
 import CustomPickerModal from "@/components/CustomPickerModal";
 import { RegisterFormData } from "@/types/users";
+import { formatCedula, formatDominicanPhone } from "@/utils/formatters";
 
 interface RegisterPersonalFieldsProps {
   control: Control<RegisterFormData>;
@@ -155,11 +156,22 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
             render={({ field: { onChange, value } }) => (
               <TextInput
                 style={styles.input}
-                placeholder="No. de identificación"
+                placeholder={
+                  identificationType === "Cedula"
+                    ? "000-0000000-0"
+                    : "No. de identificación"
+                }
                 placeholderTextColor="#999"
                 value={value}
-                onChangeText={onChange}
-                keyboardType="default"
+                onChangeText={(text) => {
+                  if (identificationType === "Cedula") {
+                    onChange(formatCedula(text));
+                  } else {
+                    onChange(text.toUpperCase());
+                  }
+                }}
+                keyboardType={identificationType === "Cedula" ? "numeric" : "default"}
+                maxLength={identificationType === "Cedula" ? 13 : 15}
               />
             )}
           />
@@ -267,13 +279,14 @@ export const RegisterPersonalFields: React.FC<RegisterPersonalFieldsProps> = ({
             style={styles.input}
             placeholder={
               personType === "juridica"
-                ? "Teléfono de contacto (Opcional)"
-                : "Teléfono"
+                ? "Teléfono de contacto (+1 (809) 000-0000)"
+                : "+1 (809) 000-0000"
             }
             placeholderTextColor="#999"
             keyboardType="phone-pad"
             value={value}
-            onChangeText={onChange}
+            onChangeText={(text) => onChange(formatDominicanPhone(text))}
+            maxLength={17}
           />
         )}
       />
